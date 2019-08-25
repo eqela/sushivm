@@ -22,7 +22,7 @@
 # SOFTWARE.
 #
 
-include Makefile.config.win32
+include Makefile.config
 
 VERSION=0.99.0
 OBJS=main.o \
