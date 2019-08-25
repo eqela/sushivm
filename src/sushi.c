@@ -29,7 +29,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <stdint.h>
+#ifdef SUSHI_SUPPORT_LINUX
 #include <arpa/inet.h>
+#endif
+#ifdef SUSHI_SUPPORT_WIN32
+#include <winsock.h>
+#endif
 #include "sushi.h"
 #include "lib_crypto.h"
 #include "lib_io.h"
@@ -95,11 +101,43 @@ lua_State* sushi_create_new_state()
 
 const char* sushi_get_executable_path()
 {
+#if defined(SUSHI_SUPPORT_LINUX)
 	static char selfPath[PATH_MAX+1];
 	if(readlink("/proc/self/exe", selfPath, PATH_MAX) < 0) {
 		return NULL;
 	}
 	return selfPath;
+#elif defined(SUSHI_SUPPORT_WIN32)
+	static char selfPath[PATH_MAX+1];
+	int r = GetModuleFileName(NULL, selfPath, PATH_MAX);
+	if(r < 1) {
+		return NULL;
+	}
+	return selfPath;
+#else
+#error No implementation for sushi_get_executable_path
+#endif
+}
+
+char* sushi_get_real_path(const char* path)
+{
+#if defined(SUSHI_SUPPORT_LINUX)
+	char _realpath[PATH_MAX+1];
+	const char* rpath = realpath(path, _realpath);
+	if(rpath == NULL) {
+		return NULL;
+	}
+	return strdup(rpath);
+#elif defined(SUSHI_SUPPORT_WIN32)
+	char _realpath[32768];
+	int r = GetFullPathName(path, 32768, _realpath, NULL);
+	if(r < 1) {
+		return NULL;
+	}
+	return strdup(_realpath);
+#else
+#error No implementation for realpath
+#endif
 }
 
 SushiCode* sushi_code_read_from_file(const char* path)
@@ -107,42 +145,50 @@ SushiCode* sushi_code_read_from_file(const char* path)
 	if(path == NULL) {
 		return NULL;
 	}
-	char _realpath[PATH_MAX+1];
-	const char* rpath = realpath(path, _realpath);
+	char* rpath = sushi_get_real_path(path);
 	if(rpath == NULL) {
-		rpath = path;
+		rpath = strdup(path);
+	}
+	if(rpath == NULL) {
+		return NULL;
 	}
 	struct stat st;
 	if(stat(rpath, &st) != 0) {
+		free(rpath);
 		return NULL;
 	}
 	int sz = st.st_size;
 	if(sz < 1) {
+		free(rpath);
 		return NULL;
 	}
 	FILE* fp = fopen(rpath, "rb");
 	if(fp == NULL) {
+		free(rpath);
 		return NULL;
 	}
 	char* v = (char*)malloc(sz);
 	if(v == NULL) {
 		fclose(fp);
+		free(rpath);
 		return NULL;
 	}
 	if(fread(v, 1, sz, fp) != sz) {
 		fclose(fp);
 		free(v);
+		free(rpath);
 		return NULL;
 	}
 	fclose(fp);
 	SushiCode* vv = (SushiCode*)malloc(sizeof(SushiCode));
 	if(vv == NULL) {
 		free(v);
+		free(rpath);
 		return NULL;
 	}
 	vv->data = v;
 	vv->dataSize = sz;
-	vv->fileName = strdup(rpath);
+	vv->fileName = rpath;
 	return vv;
 }
 

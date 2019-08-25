@@ -22,12 +22,20 @@
  * SOFTWARE.
  */
 
+#ifdef SUSHI_SUPPORT_WIN32
+#define _CRT_RAND_S
+#include <winsock.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <arpa/inet.h>
+#include <stdint.h>
 #include "lib_util.h"
 #include "zbuf.h"
+
+#ifdef SUSHI_SUPPORT_LINUX
+#include <arpa/inet.h>
+#endif
 
 // FIXME: Fix all string operations to properly process as UTF8
 
@@ -213,20 +221,26 @@ static int create_buffer(lua_State* state)
 
 static int create_random_number_generator(lua_State* state)
 {
-	int size = luaL_checkint(state, 2);
+	int seed = luaL_checkint(state, 2);
 	size_t sz = sizeof(int);
 	void* ptr = lua_newuserdata(state, sz);
-	memcpy(ptr, &size, sz);
+	memcpy(ptr, &seed, sz);
 	return 1;
 }
 
 static int create_random_number(lua_State* state)
 {
 	void* ptr = lua_touserdata(state, 2);
-	int v = 0;
-	memcpy(&v, ptr, sizeof(int));
-	lua_pushnumber(state, rand_r(&v));
-	memcpy(ptr, &v, sizeof(int));
+	int seed = 0;
+	memcpy(&seed, ptr, sizeof(int));
+	unsigned int result = 0;
+#if defined(SUSHI_SUPPORT_WIN32)
+	rand_s(&result);
+#else
+	result = (unsigned int)rand_r(&seed);
+#endif
+	lua_pushnumber(state, result);
+	memcpy(ptr, &seed, sizeof(int));
 	return 1;
 }
 

@@ -25,140 +25,28 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/epoll.h>
 #include <sys/types.h>
+#include <errno.h>
+#include "lib_net.h"
+
+#if defined(SUSHI_SUPPORT_LINUX)
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <errno.h>
-#include "lib_net.h"
+#endif
 
-static int create_io_manager(lua_State* state)
-{
-	lua_pushnumber(state, epoll_create(1));
-	return 1;
-}
+#if defined(SUSHI_SUPPORT_WIN32)
+#include <winsock2.h>
+#include <windows.h>
+#include <ws2tcpip.h>
+#endif
 
-static int register_io_listener(lua_State* state)
-{
-	lua_remove(state, 1);
-	int epollfd = luaL_checknumber(state, 1);
-	int fd = luaL_checknumber(state, 2);
-	int mode = luaL_checknumber(state, 3);
-	if(epollfd < 0 || fd < 0) {
-		lua_pushnumber(state, 0);
-		return 1;
-	}
-	struct epoll_event event;
-	if(mode == 0) {
-		event.events = EPOLLIN;
-	}
-	else if(mode == 1) {
-		event.events = EPOLLOUT;
-	}
-	else if(mode == 2) {
-		event.events = EPOLLIN | EPOLLOUT;
-	}
-	else {
-		lua_pushnumber(state, 0);
-		return 1;
-	}
-	int objref = luaL_ref(state, LUA_REGISTRYINDEX);
-	if(objref < 1) {
-		lua_pushnumber(state, 0);
-		return 1;
-	}
-	event.data.fd = objref;
-	if(epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &event) != 0) {
-		luaL_unref(state, LUA_REGISTRYINDEX, objref);
-		lua_pushnumber(state, 0);
-		return 1;
-	}
-	lua_pushnumber(state, objref);
-	return 1;
-}
-
-static int remove_io_listener(lua_State* state)
-{
-	int v = 1;
-	lua_remove(state, 1);
-	int epollfd = luaL_checknumber(state, 1);
-	int fd = luaL_checknumber(state, 2);
-	int objref = luaL_checknumber(state, 3);
-	if(objref > 0) {
-		luaL_unref(state, LUA_REGISTRYINDEX, objref);
-	}
-	if(epollfd >= 0 && fd >= 0) {
-		struct epoll_event event;
-		if(epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, &event) != 0) {
-			v = 0;
-		}
-	}
-	lua_pushnumber(state, v);
-	return 1;
-}
-
-static void _callLuaMethodWithObjref(lua_State* state, int objref, const char* method)
-{
-	lua_remove(state, 1);
-	int otop = lua_gettop(state);
-	lua_rawgeti(state, LUA_REGISTRYINDEX, objref);
-	if(otop == lua_gettop(state)) {
-		return;
-	}
-	if(lua_isnil(state, -1)) {
-		return;
-	}
-	lua_pushstring(state, method);
-	lua_gettable(state, -2);
-	lua_rawgeti(state, LUA_REGISTRYINDEX, objref);
-	lua_call(state, 1, 0);
-	lua_pop(state, 1);
-}
-
-static int execute_io_manager(lua_State* state)
-{
-	lua_remove(state, 1);
-	int epollfd = luaL_checknumber(state, 1);
-	int timeout = luaL_checknumber(state, 2);
-	struct epoll_event events[1024];
-	int r = epoll_pwait(epollfd, events, 1024, timeout, NULL);
-	if(r < 0) {
-		if(errno == EINTR) {
-			lua_pushnumber(state, 0);
-		}
-		else {
-			lua_pushnumber(state, -1);
-		}
-		return 1;
-	}
-	int n;
-	for(n=0; n<r; n++) {
-		struct epoll_event* event = &(events[n]);
-		int objref = event->data.fd;
-		if(objref < 1) {
-			continue;
-		}
-		if(event->events & EPOLLIN) {
-			_callLuaMethodWithObjref(state, objref, "onReadReady");
-		}
-		if(event->events & EPOLLOUT) {
-			_callLuaMethodWithObjref(state, objref, "onWriteReady");
-		}
-	}
-	return r;
-}
-
-static int close_io_manager(lua_State* state)
-{
-	lua_remove(state, 1);
-	int fd = luaL_checknumber(state, 1);
-	if(fd >= 0) {
-		close(fd);
-	}
-	return 0;
-}
+int create_io_manager(lua_State* state);
+int register_io_listener(lua_State* state);
+int remove_io_listener(lua_State* state);
+int execute_io_manager(lua_State* state);
+int close_io_manager(lua_State* state);
 
 static int create_tcp_socket(lua_State* state)
 {
@@ -181,7 +69,7 @@ static int listen_tcp_socket(lua_State* state)
 		return 1;
 	}
 	int v = 1;
-	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &v, sizeof(int));
+	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const void*)&v, sizeof(int));
 	struct sockaddr_in addr;
 	memset(&addr, 0, sizeof(struct sockaddr_in));
 	addr.sin_family = AF_INET;

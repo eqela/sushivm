@@ -22,34 +22,30 @@
  * SOFTWARE.
  */
 
-#ifndef SUSHI_H
-#define SUSHI_H
+#include "sushi.h"
+#include "lib_net.h"
 
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
-#include "luajit.h"
-
-typedef struct
+int create_io_manager(lua_State* state)
 {
-	unsigned char* data;
-	unsigned long dataSize;
-	char* fileName;
+	return 0;
 }
-SushiCode;
 
-void sushi_error(const char* fmt, ...);
-int sushi_get_error_count();
-int sushi_has_errors();
-int sushi_print_stacktrace(lua_State* state);
-lua_State* sushi_create_new_state();
-const char* sushi_get_executable_path();
-char* sushi_get_real_path(const char* path);
-SushiCode* sushi_code_read_from_file(const char* path);
-SushiCode* sushi_code_read_from_executable(const char* path);
-SushiCode* sushi_code_free(SushiCode* code);
-int sushi_execute_program(lua_State* state, SushiCode* code);
-void* sushi_profiler_start(lua_State* state, const char* outputFile);
-void* sushi_profiler_stop(lua_State* state, void* profiler);
+int register_io_listener(lua_State* state)
+{
+	return 0;
+}
 
-#endif
+int remove_io_listener(lua_State* state)
+{
+	return 0;
+}
+
+int execute_io_manager(lua_State* state)
+{
+	return 0;
+}
+
+int close_io_manager(lua_State* state)
+{
+	return 0;
+}

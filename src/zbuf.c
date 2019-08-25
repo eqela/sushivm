@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#ifdef SUSHI_SUPPORT_ZLIB
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -115,3 +116,17 @@ int zbuf_inflate(unsigned char* srcbuf, unsigned long srclen, unsigned char** ds
 	inflateEnd(&strm);
 	return 1;
 }
+
+#else
+
+int zbuf_deflate(unsigned char* srcbuf, unsigned long srclen, unsigned char** dstbuf, unsigned long* dstlen)
+{
+	return 0;
+}
+
+int zbuf_inflate(unsigned char* srcbuf, unsigned long srclen, unsigned char** dstbuf, unsigned long* dstlen)
+{
+	return 0;
+}
+
+#endif

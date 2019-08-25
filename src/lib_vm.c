@@ -686,7 +686,7 @@ static int serialize_object(lua_State* state)
 
 static int unserialize_object(lua_State* state)
 {
-    unsigned long len;
+    size_t len;
 	lua_remove(state, 1);
     const char *buf = luaL_checklstring(state, 1, &len);
 	return mar_decode(state, buf, len);

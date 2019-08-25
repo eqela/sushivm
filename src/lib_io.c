@@ -32,6 +32,13 @@
 #include <limits.h>
 #include "lib_io.h"
 
+#ifdef SUSHI_SUPPORT_WIN32
+#include <windows.h>
+#include <direct.h>
+#include <dirent.h>
+#define NAME_MAX FILENAME_MAX
+#endif
+
 static int get_file_info(lua_State* state)
 {
 	const char* path = lua_tostring(state, 2);
@@ -43,9 +50,15 @@ static int get_file_info(lua_State* state)
 		return 0;
 	}
 	lua_pushnumber(state, st.st_size);
+#ifdef SUSHI_SUPPORT_WIN32
+	lua_pushnumber(state, st.st_ctime);
+	lua_pushnumber(state, st.st_atime);
+	lua_pushnumber(state, st.st_mtime);
+#else
 	lua_pushnumber(state, st.st_ctim.tv_sec);
 	lua_pushnumber(state, st.st_atim.tv_sec);
 	lua_pushnumber(state, st.st_mtim.tv_sec);
+#endif
 	lua_pushnumber(state, st.st_uid);
 	lua_pushnumber(state, st.st_gid);
 	lua_pushnumber(state, st.st_mode);
@@ -74,11 +87,13 @@ static int get_real_path(lua_State* state)
 	if(path == NULL) {
 		return 0;
 	}
-	char buffer[PATH_MAX+1];
-	memset(buffer, 0, PATH_MAX+1);
-	char* v = realpath(path, buffer);
-	if(v != NULL) {
-		lua_pushstring(state, v);
+	char* rpath = sushi_get_real_path(path);
+	if(rpath != NULL) {
+		lua_pushstring(state, rpath);
+		free(rpath);
+	}
+	else {
+		lua_pushnil(state);
 	}
 	return 1;
 }
@@ -90,7 +105,13 @@ static int create_directory(lua_State* state)
 		lua_pushnumber(state, 0);
 		return 1;
 	}
-	if(mkdir(path, 0755) == 0) {
+	int r;
+#if defined(SUSHI_SUPPORT_WIN32)
+	r = _mkdir(path);
+#else
+	r = mkdir(path, 0755);
+#endif
+	if(r == 0) {
 		lua_pushnumber(state, 1);
 	}
 	else {
@@ -104,6 +125,7 @@ static int doTouch(const char* path)
 	if(path == NULL) {
 		return -1;
 	}
+#if defined(SUSHI_SUPPORT_LINUX)
 	int fd = open(path, O_WRONLY | O_CREAT, 0666);
 	if(fd < 0) {
 		return -1;
@@ -111,6 +133,24 @@ static int doTouch(const char* path)
 	int v = futimens(fd, NULL);
 	close(fd);
 	return v;
+#elif defined(SUSHI_SUPPORT_WIN32)
+	int fd = open(path, O_WRONLY | O_CREAT, 0666);
+	if(fd < 0) {
+		return -1;
+	}
+	SYSTEMTIME st;
+	FILETIME mt;
+	GetSystemTime(&st);
+	SystemTimeToFileTime(&st, &mt);
+	BOOL success = SetFileTime((HANDLE)_get_osfhandle(fd), NULL, NULL, &mt);
+	close(fd);
+	if(success) {
+		return 0;
+	}
+	return -1;
+#else
+#error No implementation for doTouch
+#endif
 }
 
 static int touch_file(lua_State* state)
@@ -197,15 +237,12 @@ static int read_directory(lua_State* state)
 	if(ud == NULL || *ud == NULL) {
 		return 0;
 	}
-	struct dirent* bufp = malloc(offsetof(struct dirent, d_name) + NAME_MAX + 1);
-	struct dirent* de;
+	struct dirent* de = NULL;
 	while(1) {
-		de = NULL;
-		readdir_r(*ud, bufp, &de);
+		de = readdir(*ud);
 		if(de == NULL) {
 			closedir(*ud);
 			*ud = NULL;
-			free(bufp);
 			return 0;
 		}
 		if(!strcmp(de->d_name, ".") || !strcmp(de->d_name, "..")) {
@@ -214,7 +251,6 @@ static int read_directory(lua_State* state)
 		break;
 	}
 	lua_pushstring(state, de->d_name);
-	free(bufp);
 	return 1;
 }
 
