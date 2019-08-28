@@ -51,7 +51,7 @@ void sushi_error(const char* fmt, ...)
 {
 	va_list vlist;
 	va_start(vlist, fmt);
-	fprintf(stderr, "[ERROR] ");
+	fprintf(stderr, "[sushi:error] ");
 	vfprintf(stderr, fmt, vlist);
 	fprintf(stderr, "\n");
 	errors ++;
@@ -297,7 +297,13 @@ int sushi_execute_program(lua_State* state, SushiCode* code)
 	lua_pushstring(state, code->fileName);
 	lua_setglobal(state, "_program");
 	if(lua_pcall(state, 0, 0, 1) != LUA_OK) {
-		sushi_error("Execution failed: `%s'", lua_tostring(state, -1));
+		const char* errstr = lua_tostring(state, -1);
+		if(errstr != NULL) {
+			sushi_error("Execution failed: `%s'", errstr);
+		}
+		else {
+			sushi_error("Execution failed.");
+		}
 		return -1;
 	}
 	int rv = 0;
