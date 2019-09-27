@@ -36,6 +36,13 @@
 #include <netdb.h>
 #endif
 
+#if defined(SUSHI_SUPPORT_MACOS)
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#endif
+
 #if defined(SUSHI_SUPPORT_WIN32)
 #include <winsock2.h>
 #include <windows.h>

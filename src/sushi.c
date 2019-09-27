@@ -33,6 +33,9 @@
 #ifdef SUSHI_SUPPORT_LINUX
 #include <arpa/inet.h>
 #endif
+#ifdef SUSHI_SUPPORT_MACOS
+#import <mach-o/dyld.h>
+#endif
 #ifdef SUSHI_SUPPORT_WIN32
 #include <winsock.h>
 #endif
@@ -107,6 +110,13 @@ const char* sushi_get_executable_path()
 		return NULL;
 	}
 	return selfPath;
+#elif defined(SUSHI_SUPPORT_MACOS)
+	static char selfPath[PATH_MAX+1];
+	uint32_t size = sizeof(PATH_MAX);
+	if(_NSGetExecutablePath(selfPath, &size) < 0) {
+		return NULL;
+	}
+	return selfPath;
 #elif defined(SUSHI_SUPPORT_WIN32)
 	static char selfPath[PATH_MAX+1];
 	int r = GetModuleFileName(NULL, selfPath, PATH_MAX);
@@ -122,6 +132,13 @@ const char* sushi_get_executable_path()
 char* sushi_get_real_path(const char* path)
 {
 #if defined(SUSHI_SUPPORT_LINUX)
+	char _realpath[PATH_MAX+1];
+	const char* rpath = realpath(path, _realpath);
+	if(rpath == NULL) {
+		return NULL;
+	}
+	return strdup(rpath);
+#elif defined(SUSHI_SUPPORT_MACOS)
 	char _realpath[PATH_MAX+1];
 	const char* rpath = realpath(path, _realpath);
 	if(rpath == NULL) {
