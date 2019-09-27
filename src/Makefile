@@ -43,8 +43,6 @@ LIBS=$(LIBS_SYSDEP)
 
 all: sushi
 
-
-
 ifeq (Darwin,$(LUAJIT_TARGET_SYS))
 libluajit:
 	make MACOSX_DEPLOYMENT_TARGET="$(MACOS_GCC_VERSION)" CC="$(CC)" HOST_CC="$(HOST_CC_SYSDEP)" TARGET_SYS="$(LUAJIT_TARGET_SYS)" Q= -C luajit/src libluajit.a
