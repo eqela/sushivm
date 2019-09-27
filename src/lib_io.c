@@ -54,6 +54,11 @@ static int get_file_info(lua_State* state)
 	lua_pushnumber(state, st.st_ctime);
 	lua_pushnumber(state, st.st_atime);
 	lua_pushnumber(state, st.st_mtime);
+#endif
+#ifdef SUSHI_SUPPORT_MACOS
+	lua_pushnumber(state, st.st_ctime);
+	lua_pushnumber(state, st.st_atime);
+	lua_pushnumber(state, st.st_mtime);
 #else
 	lua_pushnumber(state, st.st_ctim.tv_sec);
 	lua_pushnumber(state, st.st_atim.tv_sec);
@@ -126,6 +131,14 @@ static int doTouch(const char* path)
 		return -1;
 	}
 #if defined(SUSHI_SUPPORT_LINUX)
+	int fd = open(path, O_WRONLY | O_CREAT, 0666);
+	if(fd < 0) {
+		return -1;
+	}
+	int v = futimens(fd, NULL);
+	close(fd);
+	return v;
+#elif defined(SUSHI_SUPPORT_MACOS)
 	int fd = open(path, O_WRONLY | O_CREAT, 0666);
 	if(fd < 0) {
 		return -1;
