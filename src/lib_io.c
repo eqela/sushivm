@@ -267,6 +267,18 @@ static int read_directory(lua_State* state)
 	return 1;
 }
 
+static int is_fd_file(int fd)
+{
+	struct stat buf;
+	if(fstat(fd, &buf) != 0) {
+		return 0;
+	}
+	if (S_ISDIR(buf.st_mode)) {
+		return 0;
+	}
+	return 1;
+}
+
 static int open_file_for_reading(lua_State* state)
 {
 	const char* path = lua_tostring(state, 2);
@@ -275,6 +287,11 @@ static int open_file_for_reading(lua_State* state)
 		return 1;
 	}
 	int v = open(path, O_RDONLY);
+	if(is_fd_file(v) == 0) {
+		close(v);
+		lua_pushnumber(state, -1);
+		return 1;
+	}
 	lua_pushnumber(state, v);
 	return 1;
 }
@@ -287,6 +304,11 @@ static int open_file_for_writing(lua_State* state)
 		return 1;
 	}
 	int v = open(path, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	if(is_fd_file(v) == 0) {
+		close(v);
+		lua_pushnumber(state, -1);
+		return 1;
+	}
 	lua_pushnumber(state, v);
 	return 1;
 }
@@ -299,6 +321,11 @@ static int open_file_for_appending(lua_State* state)
 		return 1;
 	}
 	int v = open(path, O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	if(is_fd_file(v) == 0) {
+		close(v);
+		lua_pushnumber(state, -1);
+		return 1;
+	}
 	lua_pushnumber(state, v);
 	return 1;
 }
