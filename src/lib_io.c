@@ -59,7 +59,8 @@ static int get_file_info(lua_State* state)
 	lua_pushnumber(state, st.st_ctime);
 	lua_pushnumber(state, st.st_atime);
 	lua_pushnumber(state, st.st_mtime);
-#else
+#endif
+#ifdef SUSHI_SUPPORT_LINUX
 	lua_pushnumber(state, st.st_ctim.tv_sec);
 	lua_pushnumber(state, st.st_atim.tv_sec);
 	lua_pushnumber(state, st.st_mtim.tv_sec);
