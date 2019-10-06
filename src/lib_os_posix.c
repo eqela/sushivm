@@ -32,6 +32,8 @@
 #include <unistd.h>
 #include "lib_os.h"
 
+extern char **environ;
+
 int sleep_seconds(lua_State* state)
 {
 	long n = luaL_checknumber(state, 2);
@@ -51,6 +53,25 @@ int sleep_milliseconds(lua_State* state)
 	long n = luaL_checknumber(state, 2);
 	usleep(n * 1000);
 	return 0;
+}
+
+int get_all_environment_variables(lua_State* state)
+{
+	int n = 1;
+	lua_newtable(state);
+	int table = lua_gettop(state);
+	char** p = environ;
+	if(p != NULL) {
+		while(*p != NULL) {
+			lua_pushstring(state, *p);
+			lua_rawseti(state, table, n++);
+			p++;
+		}
+	}
+	lua_pushstring(state, "n");
+	lua_pushnumber(state, n-1);
+	lua_rawset(state, table);
+	return 1;
 }
 
 int get_environment_variable(lua_State* state)
@@ -200,6 +221,7 @@ int start_process(lua_State* state)
 
 int start_piped_process(lua_State* state)
 {
+	lua_remove(state, 1);
 	int fdin[2];
 	int fdout[2];
 	int fderr[2];
@@ -257,18 +279,36 @@ int wait_for_process(lua_State* state)
 	return 1;
 }
 
-int check_process(lua_State* state)
+int is_process_alive(lua_State* state)
 {
 	int pid = luaL_checknumber(state, 2);
-	int status = 0;
-	int r = waitpid(pid, &status, WNOHANG);
-	if(r <= 0) {
+	int r = kill(pid, 0);
+	if(r == 0) {
 		lua_pushnumber(state, 1);
 	}
 	else {
 		lua_pushnumber(state, 0);
 	}
 	return 1;
+	/*
+	int status = 0;
+	int r = waitpid(pid, &status, WNOHANG);
+	if(r == pid) {
+		if(WIFEXITED(status)) {
+			lua_pushnumber(state, 0);
+		}
+		else {
+			lua_pushnumber(state, 1);
+		}
+	}
+	else if(r == 0) {
+		lua_pushnumber(state, 1);
+	}
+	else {
+		lua_pushnumber(state, 0);
+	}
+	return 1;
+	*/
 }
 
 int send_process_signal(lua_State* state)

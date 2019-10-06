@@ -35,6 +35,8 @@ OBJS=main.o \
 	lib_os.o \
 	lib_util.o \
 	lib_vm.o \
+	zlib/deflate.o zlib/inffast.o zlib/inflate.o zlib/inftrees.o zlib/zutil.o zlib/trees.o zlib/adler32.o zlib/crc32.o \
+	minizip/unzip.o minizip/zip.o minizip/ioapi.o \
 	$(OBJS_SYSDEP)
 CC=$(CC_SYSDEP)
 CFLAGS=-Iluajit/src -DSUSHI_VERSION=\"$(VERSION)\" $(CFLAGS_SYSDEP)

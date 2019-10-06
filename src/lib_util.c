@@ -32,7 +32,8 @@
 #include <stdint.h>
 #include "lib_util.h"
 #include "zbuf.h"
-
+#include "minizip/zip.h"
+#include "minizip/unzip.h"
 #ifdef SUSHI_SUPPORT_LINUX
 #include <arpa/inet.h>
 #endif
@@ -667,7 +668,7 @@ static int convert_buffer_to_string(lua_State* state)
 	return 1;
 }
 
-static int deflate(lua_State* state)
+static int sushi_deflate(lua_State* state)
 {
 	void* ptr = luaL_checkudata(state, 2, "_sushi_buffer");
 	if(ptr == NULL) {
@@ -697,7 +698,7 @@ static int deflate(lua_State* state)
 	return 1;
 }
 
-static int inflate(lua_State* state)
+static int sushi_inflate(lua_State* state)
 {
 	void* ptr = luaL_checkudata(state, 2, "_sushi_buffer");
 	if(ptr == NULL) {
@@ -725,6 +726,27 @@ static int inflate(lua_State* state)
 	memcpy(rptr+sizeof(long), result, resultlen);
 	free(result);
 	return 1;
+}
+
+static int sushi_zip(lua_State* state)
+{
+	const char* src = luaL_checkstring(state, 2);
+	const char* dst = luaL_checkstring(state, 3);
+	if(src == NULL || dst == NULL) {
+		lua_pushboolean(state, 0);
+		return 1;
+	}
+	zipFile zip = zipOpen64(dst, APPEND_STATUS_CREATE);
+	if(zip == NULL) {
+		lua_pushboolean(state, 0);
+		return 1;
+	}
+	return 0;
+}
+
+static int sushi_unzip(lua_State* state)
+{
+	return 0;
 }
 
 static void initBufferType(lua_State* state)
@@ -776,8 +798,10 @@ static const luaL_Reg funcs[] = {
 	{ "get_index_of_substring", get_index_of_substring },
 	{ "convert_string_to_buffer", convert_string_to_buffer },
 	{ "convert_buffer_to_string", convert_buffer_to_string },
-	{ "deflate", deflate },
-	{ "inflate", inflate },
+	{ "deflate", sushi_deflate },
+	{ "inflate", sushi_inflate },
+	{ "zip", sushi_zip },
+	{ "unzip", sushi_unzip },
 	{ NULL, NULL }
 };
 

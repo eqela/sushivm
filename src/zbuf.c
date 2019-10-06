@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <zlib.h>
+#include "zlib/zlib.h"
 
 static void zbuf_append(unsigned char* srcbuf, unsigned long srclen, unsigned char** dstbuf, unsigned long* dstlen)
 {

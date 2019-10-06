@@ -27,6 +27,7 @@
 int sleep_seconds(lua_State* state);
 int sleep_microseconds(lua_State* state);
 int sleep_milliseconds(lua_State* state);
+int get_all_environment_variables(lua_State* state);
 int get_environment_variable(lua_State* state);
 int get_system_type(lua_State* state);
 int get_system_time_seconds(lua_State* state);
@@ -36,7 +37,7 @@ int start_process(lua_State* state);
 int start_piped_process(lua_State* state);
 int replace_process(lua_State* state);
 int wait_for_process(lua_State* state);
-int check_process(lua_State* state);
+int is_process_alive(lua_State* state);
 int send_process_signal(lua_State* state);
 int disown_process(lua_State* state);
 
@@ -44,6 +45,7 @@ static const luaL_Reg funcs[] = {
 	{ "sleep_seconds", sleep_seconds },
 	{ "sleep_microseconds", sleep_microseconds },
 	{ "sleep_milliseconds", sleep_milliseconds },
+	{ "get_all_environment_variables", get_all_environment_variables },
 	{ "get_environment_variable", get_environment_variable },
 	{ "get_system_type", get_system_type },
 	{ "get_system_time_seconds", get_system_time_seconds },
@@ -53,7 +55,7 @@ static const luaL_Reg funcs[] = {
 	{ "start_piped_process", start_piped_process },
 	{ "replace_process", replace_process },
 	{ "wait_for_process", wait_for_process },
-	{ "check_process", check_process },
+	{ "is_process_alive", is_process_alive },
 	{ "send_process_signal", send_process_signal },
 	{ "disown_process", disown_process },
 	{ NULL, NULL }

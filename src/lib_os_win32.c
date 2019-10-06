@@ -51,6 +51,12 @@ int sleep_milliseconds(lua_State* state)
 	return 0;
 }
 
+int get_all_environment_variables(lua_State* state)
+{
+	// FIXME
+	return 0;
+}
+
 int get_environment_variable(lua_State* state)
 {
 	const char* varname = lua_tostring(state, 2);
@@ -116,7 +122,7 @@ int wait_for_process(lua_State* state)
 	return 0;
 }
 
-int check_process(lua_State* state)
+int is_process_alive(lua_State* state)
 {
 	// FIXME
 	return 0;
