@@ -112,7 +112,7 @@ const char* sushi_get_executable_path()
 	return selfPath;
 #elif defined(SUSHI_SUPPORT_MACOS)
 	static char selfPath[PATH_MAX+1];
-	uint32_t size = sizeof(PATH_MAX);
+	uint32_t size = sizeof(selfPath);
 	if(_NSGetExecutablePath(selfPath, &size) < 0) {
 		return NULL;
 	}
