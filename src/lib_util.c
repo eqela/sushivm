@@ -32,8 +32,8 @@
 #include <stdint.h>
 #include "lib_util.h"
 #include "zbuf.h"
-#include "minizip/zip.h"
-#include "minizip/unzip.h"
+#include "zip.h"
+#include "unzip.h"
 #ifdef SUSHI_SUPPORT_LINUX
 #include <arpa/inet.h>
 #endif
@@ -730,6 +730,7 @@ static int sushi_inflate(lua_State* state)
 
 static int sushi_zip(lua_State* state)
 {
+	// FIXME: Incomplete
 	const char* src = luaL_checkstring(state, 2);
 	const char* dst = luaL_checkstring(state, 3);
 	if(src == NULL || dst == NULL) {
@@ -746,6 +747,7 @@ static int sushi_zip(lua_State* state)
 
 static int sushi_unzip(lua_State* state)
 {
+	// FIXME: Not implemented
 	return 0;
 }
 

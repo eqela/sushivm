@@ -123,15 +123,24 @@ int main(int c, char** v)
 		const char* filename = NULL;
 		if(!strcasecmp(appname, "sushi")) {
 			if(c < 2) {
-				sushi_error("Usage: %s <code> <parameters..>", v[0]);
-				return 1;
+				code = sushi_code_read_from_stdin();
+				if(code == NULL) {
+					sushi_error("Failed while reading code from standard input.");
+					return 1;
+				}
 			}
-			if(!strcasecmp(v[1], "-v") || !strcasecmp(v[1], "-version") || !strcasecmp(v[1], "--version")) {
-				printf("%s\n", SUSHI_VERSION);
-				return 0;
+			else {
+				if(!strcasecmp(v[1], "-v") || !strcasecmp(v[1], "-version") || !strcasecmp(v[1], "--version")) {
+					printf("%s\n", SUSHI_VERSION);
+					return 0;
+				}
+				if(!strcasecmp(v[1], "-h") || !strcasecmp(v[1], "-help") || !strcasecmp(v[1], "--help")) {
+					sushi_error("Usage: %s <code> <parameters..>", v[0]);
+					return 0;
+				}
+				processArgcReserved = 2;
+				filename = v[1];
 			}
-			processArgcReserved = 2;
-			filename = v[1];
 		}
 		else {
 			filename = get_code_filename_for_app(appname);
@@ -141,10 +150,12 @@ int main(int c, char** v)
 			}
 			processArgcReserved = 1;
 		}
-		code = sushi_code_read_from_file(filename);
 		if(code == NULL) {
-			sushi_error("Failed to read code file: `%s'", v[1]);
-			return 1;
+			code = sushi_code_read_from_file(filename);
+			if(code == NULL) {
+				sushi_error("Failed to read code file: `%s'", v[1]);
+				return 1;
+			}
 		}
 	}
 	else {

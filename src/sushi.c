@@ -89,6 +89,8 @@ static void init_libraries(lua_State* state)
 	lib_os_init(state);
 	lib_util_init(state);
 	lib_vm_init(state);
+	lua_pushvalue(state ,(-10002));
+	lua_setglobal(state ,"_g");
 }
 
 lua_State* sushi_create_new_state()
@@ -155,6 +157,34 @@ char* sushi_get_real_path(const char* path)
 #else
 #error No implementation for realpath
 #endif
+}
+
+SushiCode* sushi_code_read_from_stdin()
+{
+	size_t sz = 0;
+	char* v = NULL;
+	char buffer[2048];
+	while(1) {
+		size_t r = read(STDIN_FILENO, buffer, 2048);
+		if(r < 1) {
+			break;
+		}
+		v = realloc(v, sz + r);
+		if(v == NULL) {
+			return NULL;
+		}
+		memcpy(v + sz, buffer, r);
+		sz += r;
+	}
+	SushiCode* vv = (SushiCode*)malloc(sizeof(SushiCode));
+	if(vv == NULL) {
+		free(v);
+		return NULL;
+	}
+	vv->data = v;
+	vv->dataSize = (unsigned long)sz;
+	vv->fileName = strdup("<stdin>");
+	return vv;
 }
 
 SushiCode* sushi_code_read_from_file(const char* path)
@@ -313,7 +343,7 @@ int sushi_execute_program(lua_State* state, SushiCode* code)
 	}
 	lua_pushstring(state, code->fileName);
 	lua_setglobal(state, "_program");
-	if(lua_pcall(state, 0, 0, 1) != LUA_OK) {
+	if(lua_pcall(state, 0, 1, 1) != LUA_OK) {
 		const char* errstr = lua_tostring(state, -1);
 		if(errstr != NULL) {
 			sushi_error("Execution failed: `%s'", errstr);
@@ -323,7 +353,7 @@ int sushi_execute_program(lua_State* state, SushiCode* code)
 		}
 		return -1;
 	}
-	int rv = 0;
+	int rv = lua_tonumber(state, lua_gettop(state));
 	lua_getglobal(state, "_main");
 	if(lua_isnil(state, lua_gettop(state)) == 0) {
 		lua_getglobal(state, "_args");

@@ -22,9 +22,25 @@
 # SOFTWARE.
 #
 
-include Makefile.config
+ifeq ($(OS),Windows_NT)
+	include Makefile.config.win32
+else
+	ifeq ($(CROSSTARGET),win32)
+		include Makefile.config.win32
+	else
+		uname_S := $(shell uname -s)
+		ifeq ($(uname_S), Linux)
+			include Makefile.config.linux
+		endif
+		ifeq ($(uname_S), Darwin)
+			include Makefile.config.macos
+		endif
+	endif
+endif
 
-VERSION=0.99.0
+ifeq ($(VERSION),)
+	VERSION=dev
+endif
 OBJS=main.o \
 	sushi.o \
 	lmarshal.o \
@@ -39,11 +55,11 @@ OBJS=main.o \
 	minizip/unzip.o minizip/zip.o minizip/ioapi.o \
 	$(OBJS_SYSDEP)
 CC=$(CC_SYSDEP)
-CFLAGS=-Iluajit/src -DSUSHI_VERSION=\"$(VERSION)\" $(CFLAGS_SYSDEP)
+CFLAGS=-Iluajit/src -Izlib -Iminizip -DSUSHI_VERSION=\"$(VERSION)\" $(CFLAGS_SYSDEP)
 LDFLAGS=$(LDFLAGS_SYSDEP)
 LIBS=$(LIBS_SYSDEP)
 
-all: sushi
+all: sushi test
 
 ifeq (Darwin,$(LUAJIT_TARGET_SYS))
 libluajit:
@@ -55,6 +71,13 @@ endif
 
 sushi: libluajit $(OBJS)
 	$(CC) -o sushi$(EXESUFFIX) $(OBJS) luajit/src/libluajit.a $(LDFLAGS) $(LIBS)
+
+test:
+	@if [ "$(CROSSTARGET)" = "" ]; then \
+		if ! ./sushi test.lua; then echo "[FAILED] Tests failed to execute successfully"; exit 1; fi; \
+	else \
+		echo "Skipping tests when cross-compiling."; \
+	fi
 
 clean:
 	make -C luajit/src clean

@@ -45,6 +45,7 @@ int sushi_print_stacktrace(lua_State* state);
 lua_State* sushi_create_new_state();
 const char* sushi_get_executable_path();
 char* sushi_get_real_path(const char* path);
+SushiCode* sushi_code_read_from_stdin();
 SushiCode* sushi_code_read_from_file(const char* path);
 SushiCode* sushi_code_read_from_executable(const char* path);
 SushiCode* sushi_code_free(SushiCode* code);
