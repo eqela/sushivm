@@ -27,9 +27,15 @@ HOST_CC_SYSDEP=gcc
 LUAJIT_TARGET_SYS=Linux
 CFLAGS_SYSDEP= \
 	-DSUSHI_SUPPORT_LINUX \
-	-DSUSHI_SUPPORT_ZLIB \
-	`pkg-config openssl --cflags`
-LIBS_SYSDEP=-lm -ldl -lpthread `pkg-config openssl --libs`
+	-DSUSHI_SUPPORT_ZLIB
+LIBS_SYSDEP=-lm -ldl -lpthread
+ifeq ($(STATIC_BUILD),yes)
+	CFLAGS_SYSDEP += `pkg-config openssl --static --cflags`
+	LIBS_SYSDEP += `pkg-config openssl --static --libs`
+else
+	CFLAGS_SYSDEP += `pkg-config openssl --cflags`
+	LIBS_SYSDEP += `pkg-config openssl --libs`
+endif
 OBJS_SYSDEP=\
 	lib_net_iomgr_epoll.o \
 	lib_os_posix.o \

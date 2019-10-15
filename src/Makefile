@@ -57,6 +57,9 @@ OBJS=main.o \
 CC=$(CC_SYSDEP)
 CFLAGS=-Iluajit/src -Izlib -Iminizip -DSUSHI_VERSION=\"$(VERSION)\" $(CFLAGS_SYSDEP)
 LDFLAGS=$(LDFLAGS_SYSDEP)
+ifeq ($(STATIC_BUILD),yes)
+	LDFLAGS += -static
+endif
 LIBS=$(LIBS_SYSDEP)
 
 all: sushi test

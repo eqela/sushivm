@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include "sushi.h"
@@ -45,7 +46,13 @@ static SSL_CTX* get_ssl_client_context()
 {
 	if(sslctx == NULL) {
 		initialize_ssl();
-		sslctx = SSL_CTX_new(TLSv1_2_client_method());
+		const SSL_METHOD* method = NULL;
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+		method = TLSv1_2_client_method();
+#else
+		method = TLS_client_method();
+#endif
+		sslctx = SSL_CTX_new(method);
 	}
 	return sslctx;
 }
