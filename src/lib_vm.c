@@ -100,7 +100,8 @@ static int get_global(lua_State* state)
 	lua_remove(state, 1);
 	const char* name = lua_tostring(state, 1);
 	if(name == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	const char* dot = strchr(name, '.');
 	if(dot == NULL) {
@@ -387,7 +388,8 @@ static int remove_from_indexed_table(lua_State* state)
 	int e = aux_getn(state, 1);
 	int pos = luaL_optint(state, 2, e);
 	if(!(1 <= pos && pos <= e)) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	luaL_setn(state, 1, e-1);
 	lua_rawgeti(state, 1, pos);
@@ -531,15 +533,19 @@ static int get_subscript_value(lua_State* state)
 		lua_pushnumber(state, (int)((unsigned char*)bptr)[sizeof(long) + offset]);
 		return 1;
 	}
-	else if(lua_isnumber(state, 2)) {
-		lua_Number n = lua_tonumber(state, 2);
-		lua_rawgeti(state, 1, n + 1);
-		return 1;
+	if(lua_istable(state, 1)) {
+		if(lua_isnumber(state, 2)) {
+			lua_Number n = lua_tonumber(state, 2);
+			lua_rawgeti(state, 1, n + 1);
+			return 1;
+		}
+		else {
+			lua_rawget(state, 1);
+			return 1;
+		}
 	}
-	else {
-		lua_rawget(state, 1);
-		return 1;
-	}
+	lua_pushnil(state);
+	return 1;
 }
 
 static int set_subscript_value(lua_State* state)

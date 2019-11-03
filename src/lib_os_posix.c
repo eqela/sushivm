@@ -78,7 +78,8 @@ int get_environment_variable(lua_State* state)
 {
 	const char* varname = lua_tostring(state, 2);
 	if(varname == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	lua_pushstring(state, getenv(varname));
 	return 1;

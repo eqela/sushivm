@@ -89,7 +89,8 @@ int ssl_connect(lua_State* state)
 	const char* host = lua_tostring(state, 3);
 	SSL* ssl = create_ssl_for_socket_fd(fd, host);
 	if(ssl == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	void* ptr = lua_newuserdata(state, sizeof(SSL*));
 	luaL_getmetatable(state, "_sushi_ssl");

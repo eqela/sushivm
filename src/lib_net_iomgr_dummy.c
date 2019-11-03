@@ -27,22 +27,32 @@
 
 int create_io_manager(lua_State* state)
 {
-	return 0;
+	lua_pushnil(state);
+	return 1;
 }
 
 int register_io_listener(lua_State* state)
 {
-	return 0;
+	lua_pushnumber(state, 0);
+	return 1;
+}
+
+int update_io_listener(lua_State* state)
+{
+	lua_pushnumber(state, 1);
+	return 1;
 }
 
 int remove_io_listener(lua_State* state)
 {
-	return 0;
+	lua_pushnumber(state, 1);
+	return 1;
 }
 
 int execute_io_manager(lua_State* state)
 {
-	return 0;
+	lua_pushnumber(state, -1);
+	return 1;
 }
 
 int close_io_manager(lua_State* state)

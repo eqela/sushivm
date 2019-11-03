@@ -34,6 +34,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <fcntl.h>
 #endif
 
 #if defined(SUSHI_SUPPORT_MACOS)
@@ -41,6 +42,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <fcntl.h>
 #endif
 
 #if defined(SUSHI_SUPPORT_WIN32)
@@ -51,6 +53,7 @@
 
 int create_io_manager(lua_State* state);
 int register_io_listener(lua_State* state);
+int update_io_listener(lua_State* state);
 int remove_io_listener(lua_State* state);
 int execute_io_manager(lua_State* state);
 int close_io_manager(lua_State* state);
@@ -60,6 +63,50 @@ static int create_tcp_socket(lua_State* state)
 	int fd = socket(AF_INET, SOCK_STREAM, 0);
 	lua_pushnumber(state, fd);
 	return 1;
+}
+
+static int set_socket_non_blocking(lua_State* state)
+{
+#if defined(SUSHI_SUPPORT_LINUX) || defined(SUSHI_SUPPORT_MACOS)
+	int fd = luaL_checknumber(state, 2);
+	int flags = fcntl(fd, F_GETFL);
+	if(flags < 0) {
+		lua_pushnumber(state, 1);
+		return 1;
+	}
+	int r = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+	if(r < 0) {
+		lua_pushnumber(state, 1);
+		return 1;
+	}
+	lua_pushnumber(state, 0);
+	return 1;
+#else
+	lua_pushnumber(state, 1);
+	return 1;
+#endif
+}
+
+static int set_socket_blocking(lua_State* state)
+{
+#if defined(SUSHI_SUPPORT_LINUX) || defined(SUSHI_SUPPORT_MACOS)
+	int fd = luaL_checknumber(state, 2);
+	int flags = fcntl(fd, F_GETFL);
+	if(flags < 0) {
+		lua_pushnumber(state, 1);
+		return 1;
+	}
+	int r = fcntl(fd, F_SETFL, flags & (~O_NONBLOCK));
+	if(r < 0) {
+		lua_pushnumber(state, 1);
+		return 1;
+	}
+	lua_pushnumber(state, 0);
+	return 1;
+#else
+	lua_pushnumber(state, 1);
+	return 1;
+#endif
 }
 
 static int listen_tcp_socket(lua_State* state)
@@ -157,14 +204,16 @@ static int get_tcp_socket_peer_address(lua_State* state)
 	lua_remove(state, 1);
 	int fd = luaL_checknumber(state, 1);
 	if(fd < 0) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	struct sockaddr_in addr;
 	memset(&addr, 0, sizeof(struct sockaddr_in));
 	socklen_t addrlen = sizeof(struct sockaddr_in);
 	int r = getpeername(fd, (struct sockaddr*)&addr, &addrlen);
 	if(r < 0) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	lua_pushstring(state, inet_ntoa(addr.sin_addr));
 	return 1;
@@ -175,14 +224,16 @@ static int get_tcp_socket_peer_port(lua_State* state)
 	lua_remove(state, 1);
 	int fd = luaL_checknumber(state, 1);
 	if(fd < 0) {
-		return 0;
+		lua_pushnumber(state, -1);
+		return 1;
 	}
 	struct sockaddr_in addr;
 	memset(&addr, 0, sizeof(struct sockaddr_in));
 	socklen_t addrlen = sizeof(struct sockaddr_in);
 	int r = getpeername(fd, (struct sockaddr*)&addr, &addrlen);
 	if(r < 0) {
-		return 0;
+		lua_pushnumber(state, -1);
+		return 1;
 	}
 	lua_pushnumber(state, ntohs(addr.sin_port));
 	return 1;
@@ -201,10 +252,11 @@ static int read_from_tcp_socket(lua_State* state)
 		lua_pushnumber(state, -1);
 		return 1;
 	}
+	long bsz;
+	memcpy(&bsz, ptr, sizeof(long));
 	int size = luaL_checknumber(state, 3);
-	if(size < 0) {
-		lua_pushnumber(state, -1);
-		return 1;
+	if(size < 0 || size > bsz) {
+		size = bsz;
 	}
 	if(size == 0) {
 		lua_pushnumber(state, 0);
@@ -259,8 +311,7 @@ static int write_to_tcp_socket(lua_State* state)
 
 static int accept_tcp_socket(lua_State* state)
 {
-	lua_remove(state, 1);
-	int fd = luaL_checknumber(state, 1);
+	int fd = luaL_checknumber(state, 2);
 	if(fd < 0) {
 		lua_pushnumber(state, -1);
 		return 1;
@@ -272,8 +323,7 @@ static int accept_tcp_socket(lua_State* state)
 
 static int close_tcp_socket(lua_State* state)
 {
-	lua_remove(state, 1);
-	int fd = luaL_checknumber(state, 1);
+	int fd = luaL_checknumber(state, 2);
 	if(fd >= 0) {
 		close(fd);
 	}
@@ -283,10 +333,13 @@ static int close_tcp_socket(lua_State* state)
 static const luaL_Reg funcs[] = {
 	{ "create_io_manager", create_io_manager },
 	{ "register_io_listener", register_io_listener },
+	{ "update_io_listener", update_io_listener },
 	{ "remove_io_listener", remove_io_listener },
 	{ "execute_io_manager", execute_io_manager },
 	{ "close_io_manager", close_io_manager },
 	{ "create_tcp_socket", create_tcp_socket },
+	{ "set_socket_non_blocking", set_socket_non_blocking },
+	{ "set_socket_blocking", set_socket_blocking },
 	{ "listen_tcp_socket", listen_tcp_socket },
 	{ "connect_tcp_socket", connect_tcp_socket },
 	{ "get_tcp_socket_peer_address", get_tcp_socket_peer_address },

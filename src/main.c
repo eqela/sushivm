@@ -26,6 +26,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "sushi.h"
+#if defined(SUSHI_SUPPORT_LINUX) || defined(SUSHI_SUPPORT_MACOS)
+#include <signal.h>
+#endif
 
 static const char* get_app_name(const char* fullpath)
 {
@@ -114,6 +117,10 @@ int main(int c, char** v)
 	int processArgc = c;
 	char** processArgv = v;
 	int processArgcReserved = 2;
+#if defined(SUSHI_SUPPORT_LINUX) || defined(SUSHI_SUPPORT_MACOS)
+	signal(SIGPIPE, SIG_IGN);
+	// FIXME: Handle SIGINT, SIGTERM
+#endif
 	SushiCode* code = sushi_code_read_from_executable(sushi_get_executable_path());
 	if(sushi_has_errors()) {
 		return 1;

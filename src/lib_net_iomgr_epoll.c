@@ -51,6 +51,7 @@ int register_io_listener(lua_State* state)
 		return 1;
 	}
 	struct epoll_event event;
+	memset(&event, 0, sizeof(struct epoll_event));
 	if(mode == 0) {
 		event.events = EPOLLIN;
 	}
@@ -79,6 +80,43 @@ int register_io_listener(lua_State* state)
 	return 1;
 }
 
+int update_io_listener(lua_State* state)
+{
+	int epollfd = luaL_checknumber(state, 2);
+	int fd = luaL_checknumber(state, 3);
+	int mode = luaL_checknumber(state, 4);
+	int objref = luaL_checknumber(state, 5);
+	if(epollfd < 0 || fd < 0 || objref < 0) {
+		lua_pushnumber(state, 1);
+		return 1;
+	}
+	struct epoll_event event;
+	memset(&event, 0, sizeof(struct epoll_event));
+	if(mode == 0) {
+		event.events = EPOLLIN;
+	}
+	else if(mode == 1) {
+		event.events = EPOLLOUT;
+	}
+	else if(mode == 2) {
+		event.events = EPOLLIN | EPOLLOUT;
+	}
+	else {
+		lua_pushnumber(state, 0);
+		return 1;
+	}
+	event.data.fd = objref;
+	if(epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &event) != 0) {
+		// error
+		lua_pushnumber(state, 1);
+	}
+	else {
+		// success
+		lua_pushnumber(state, 0);
+	}
+	return 1;
+}
+
 int remove_io_listener(lua_State* state)
 {
 	int v = 1;
@@ -91,6 +129,7 @@ int remove_io_listener(lua_State* state)
 	}
 	if(epollfd >= 0 && fd >= 0) {
 		struct epoll_event event;
+		memset(&event, 0, sizeof(struct epoll_event));
 		if(epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, &event) != 0) {
 			v = 0;
 		}
@@ -101,27 +140,29 @@ int remove_io_listener(lua_State* state)
 
 void _callLuaMethodWithObjref(lua_State* state, int objref, const char* method)
 {
-	lua_remove(state, 1);
 	int otop = lua_gettop(state);
 	lua_rawgeti(state, LUA_REGISTRYINDEX, objref);
 	if(otop == lua_gettop(state)) {
 		return;
 	}
-	if(lua_isnil(state, -1)) {
+	if(!lua_istable(state, -1)) {
 		return;
 	}
 	lua_pushstring(state, method);
 	lua_gettable(state, -2);
-	lua_rawgeti(state, LUA_REGISTRYINDEX, objref);
-	lua_call(state, 1, 0);
-	lua_pop(state, 1);
+	if(lua_isfunction(state, -1)) {
+		lua_rawgeti(state, LUA_REGISTRYINDEX, objref);
+		lua_call(state, 1, 0);
+	}
+	else {
+		lua_pop(state, 1);
+	}
 }
 
 int execute_io_manager(lua_State* state)
 {
-	lua_remove(state, 1);
-	int epollfd = luaL_checknumber(state, 1);
-	int timeout = luaL_checknumber(state, 2);
+	int epollfd = luaL_checknumber(state, 2);
+	int timeout = luaL_checknumber(state, 3);
 	struct epoll_event events[1024];
 	int r = epoll_pwait(epollfd, events, 1024, timeout, NULL);
 	if(r < 0) {
@@ -140,10 +181,13 @@ int execute_io_manager(lua_State* state)
 		if(objref < 1) {
 			continue;
 		}
-		if(event->events & EPOLLIN) {
+		if(event->events & EPOLLIN && event->events & EPOLLOUT) {
+			_callLuaMethodWithObjref(state, objref, "onReadWriteReady");
+		}
+		else if(event->events & EPOLLIN) {
 			_callLuaMethodWithObjref(state, objref, "onReadReady");
 		}
-		if(event->events & EPOLLOUT) {
+		else if(event->events & EPOLLOUT) {
 			_callLuaMethodWithObjref(state, objref, "onWriteReady");
 		}
 	}

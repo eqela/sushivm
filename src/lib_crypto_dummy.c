@@ -26,17 +26,20 @@
 
 int ssl_connect(lua_State* state)
 {
-	return 0;
+	lua_pushnil(state);
+	return 1;
 }
 
 int ssl_read(lua_State* state)
 {
-	return 0;
+	lua_pushnumber(state, -1);
+	return 1;
 }
 
 int ssl_write(lua_State* state)
 {
-	return 0;
+	lua_pushnumber(state, -1);
+	return 1;
 }
 
 int ssl_close_gc(lua_State* state)

@@ -54,14 +54,16 @@ int sleep_milliseconds(lua_State* state)
 int get_all_environment_variables(lua_State* state)
 {
 	// FIXME
-	return 0;
+	lua_pushnil(state);
+	return 1;
 }
 
 int get_environment_variable(lua_State* state)
 {
 	const char* varname = lua_tostring(state, 2);
 	if(varname == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	lua_pushstring(state, getenv(varname));
 	return 1;
@@ -101,31 +103,36 @@ int get_system_timezone_seconds(lua_State* state)
 int start_process(lua_State* state)
 {
 	// FIXME
-	return 0;
+	lua_pushnil(state);
+	return 1;
 }
 
 int start_piped_process(lua_State* state)
 {
 	// FIXME
-	return 0;
+	lua_pushnil(state);
+	return 1;
 }
 
 int replace_process(lua_State* state)
 {
 	// FIXME
-	return 0;
+	lua_pushnil(state);
+	return 1;
 }
 
 int wait_for_process(lua_State* state)
 {
 	// FIXME
-	return 0;
+	lua_pushnil(state);
+	return 1;
 }
 
 int is_process_alive(lua_State* state)
 {
 	// FIXME
-	return 0;
+	lua_pushnil(state);
+	return 1;
 }
 
 int send_process_signal(lua_State* state)

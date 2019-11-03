@@ -177,7 +177,8 @@ static int allocate_buffer(lua_State* state)
 {
 	long size = luaL_checklong(state, 2);
 	if(size < 1) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	void* ptr = lua_newuserdata(state, sizeof(long) + (size_t)size);
 	luaL_getmetatable(state, "_sushi_buffer");
@@ -203,7 +204,8 @@ static int create_buffer(lua_State* state)
 	lua_remove(state, 1);
 	long size = lua_objlen(state, 1);
 	if(size < 1) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	void* ptr = lua_newuserdata(state, sizeof(long) + (size_t)size);
 	luaL_getmetatable(state, "_sushi_buffer");
@@ -465,7 +467,8 @@ static int compare_string_ignore_case(lua_State* state)
 	const char* s1 = luaL_checkstring(state, 2);
 	const char* s2 = luaL_checkstring(state, 3);
 	if(s1 == NULL || s2 == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	int v = 0;
 	int n = 0;
@@ -491,56 +494,38 @@ static int compare_string_ignore_case(lua_State* state)
 
 static int change_string_to_lowercase(lua_State* state)
 {
-	const char* str = lua_tostring(state, 2);
-	char* v = NULL;
-	if(str != NULL) {
-		size_t len = strlen(str);
-		if(len > 0) {
-			v = (char*)malloc(len + 1);
-			const char* sp = str;
-			char* dp = v;
-			while(1) {
-				*dp = tolower(*sp);
-				if(*sp == 0) {
-					*dp = 0;
-					break;
-				}
-				dp ++;
-				sp ++;
-			}
+	size_t len = 0;
+	const char* str = lua_tolstring(state, 2, &len);
+	if(str != NULL && len > 0) {
+		char* v = (char*)malloc(len);
+		size_t n;
+		for(n=0; n<len; n++) {
+			v[n] = tolower(str[n]);
 		}
-	}
-	lua_pushstring(state, v);
-	if(v != NULL) {
+		lua_pushlstring(state, v, len);
 		free(v);
+	}
+	else {
+		lua_pushstring(state, "");
 	}
 	return 1;
 }
 
 static int change_string_to_uppercase(lua_State* state)
 {
-	const char* str = lua_tostring(state, 2);
-	char* v = NULL;
-	if(str != NULL) {
-		size_t len = strlen(str);
-		if(len > 0) {
-			v = (char*)malloc(len + 1);
-			const char* sp = str;
-			char* dp = v;
-			while(1) {
-				*dp = toupper(*sp);
-				if(*sp == 0) {
-					*dp = 0;
-					break;
-				}
-				dp ++;
-				sp ++;
-			}
+	size_t len = 0;
+	const char* str = lua_tolstring(state, 2, &len);
+	if(str != NULL && len > 0) {
+		char* v = (char*)malloc(len);
+		size_t n;
+		for(n=0; n<len; n++) {
+			v[n] = toupper(str[n]);
 		}
-	}
-	lua_pushstring(state, v);
-	if(v != NULL) {
+		lua_pushlstring(state, v, len);
 		free(v);
+	}
+	else {
+		lua_pushstring(state, "");
 	}
 	return 1;
 }
@@ -550,7 +535,8 @@ static int get_substring(lua_State* state)
 	size_t slen;
 	const char* str = lua_tolstring(state, 2, &slen);
 	if(str == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	long start = luaL_checknumber(state, 3);
 	if(start < 0) {
@@ -639,7 +625,8 @@ static int convert_string_to_buffer(lua_State* state)
 	size_t size;
 	const char* str = luaL_checklstring(state, 2, &size);
 	if(str == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	size_t longsz = sizeof(long);
 	void* ptr = lua_newuserdata(state, longsz + size);
@@ -655,7 +642,8 @@ static int convert_buffer_to_string(lua_State* state)
 {
 	void* ptr = luaL_checkudata(state, 2, "_sushi_buffer");
 	if(ptr == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	long size = 0;
 	memcpy(&size, ptr, sizeof(long));
@@ -672,22 +660,26 @@ static int sushi_deflate(lua_State* state)
 {
 	void* ptr = luaL_checkudata(state, 2, "_sushi_buffer");
 	if(ptr == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	long size = 0;
 	memcpy(&size, ptr, sizeof(long));
 	if(size < 1) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	unsigned char* result = NULL;
 	unsigned long resultlen = 0;
 	zbuf_deflate(ptr+sizeof(long), size, &result, &resultlen);
 	if(result == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	if(resultlen < 1) {
 		free(result);
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	void* rptr = lua_newuserdata(state, sizeof(long) + (size_t)resultlen);
 	luaL_getmetatable(state, "_sushi_buffer");
@@ -702,22 +694,26 @@ static int sushi_inflate(lua_State* state)
 {
 	void* ptr = luaL_checkudata(state, 2, "_sushi_buffer");
 	if(ptr == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	long size = 0;
 	memcpy(&size, ptr, sizeof(long));
 	if(size < 1) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	unsigned char* result = NULL;
 	unsigned long resultlen = 0;
 	zbuf_inflate(ptr+sizeof(long), size, &result, &resultlen);
 	if(result == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	if(resultlen < 1) {
 		free(result);
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	void* rptr = lua_newuserdata(state, sizeof(long) + (size_t)resultlen);
 	luaL_getmetatable(state, "_sushi_buffer");
@@ -742,13 +738,15 @@ static int sushi_zip(lua_State* state)
 		lua_pushboolean(state, 0);
 		return 1;
 	}
-	return 0;
+		lua_pushnil(state);
+		return 1;
 }
 
 static int sushi_unzip(lua_State* state)
 {
 	// FIXME: Not implemented
-	return 0;
+		lua_pushnil(state);
+		return 1;
 }
 
 static void initBufferType(lua_State* state)

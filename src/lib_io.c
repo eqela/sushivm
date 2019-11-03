@@ -43,11 +43,13 @@ static int get_file_info(lua_State* state)
 {
 	const char* path = lua_tostring(state, 2);
 	if(path == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	struct stat st;
 	if(stat(path, &st) != 0) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	lua_pushnumber(state, st.st_size);
 #ifdef SUSHI_SUPPORT_WIN32
@@ -91,7 +93,8 @@ static int get_real_path(lua_State* state)
 {
 	const char* path = lua_tostring(state, 2);
 	if(path == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	char* rpath = sushi_get_real_path(path);
 	if(rpath != NULL) {
@@ -229,11 +232,13 @@ static int open_directory(lua_State* state)
 {
 	const char* path = lua_tostring(state, 2);
 	if(path == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	DIR* dir = opendir(path);
 	if(dir == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	DIR** ud = (DIR**)lua_newuserdata(state, sizeof(DIR*));
 	*ud = dir;
@@ -249,7 +254,8 @@ static int read_directory(lua_State* state)
 {
 	DIR** ud = (DIR**)lua_touserdata(state, 2);
 	if(ud == NULL || *ud == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	struct dirent* de = NULL;
 	while(1) {
@@ -257,7 +263,8 @@ static int read_directory(lua_State* state)
 		if(de == NULL) {
 			closedir(*ud);
 			*ud = NULL;
-			return 0;
+			lua_pushnil(state);
+			return 1;
 		}
 		if(!strcmp(de->d_name, ".") || !strcmp(de->d_name, "..")) {
 			continue;
@@ -427,7 +434,8 @@ static int get_current_directory(lua_State* state)
 {
 	char* v = getcwd(NULL, 0);
 	if(v == NULL) {
-		return 0;
+		lua_pushnil(state);
+		return 1;
 	}
 	lua_pushstring(state, v);
 	free(v);
