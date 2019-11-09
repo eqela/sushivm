@@ -50,6 +50,25 @@
 
 static int errors = 0;
 
+const char* sushi_error_to_string(lua_State* state)
+{
+	const char* v = lua_tostring(state, -1);
+	if(v != NULL) {
+		return v;
+	}
+	if(lua_istable(state, -1)) {
+		int tableindex = lua_gettop(state);
+		lua_pushstring(state, "toString");
+		lua_gettable(state, -2);
+		if(lua_isfunction(state, -1)) {
+			lua_pushvalue(state, tableindex);
+			lua_call(state, 1, 1);
+			return lua_tostring(state, -1);
+		}
+	}
+	return NULL;
+}
+
 void sushi_error(const char* fmt, ...)
 {
 	va_list vlist;
@@ -76,7 +95,7 @@ int sushi_has_errors()
 int sushi_print_stacktrace(lua_State* state)
 {
 	luaL_traceback(state, state, NULL, 0);
-	sushi_error("%s", lua_tostring(state, -1));
+	sushi_error("%s", sushi_error_to_string(state));
 	lua_pop(state, 1);
 	return 1;
 }
@@ -334,7 +353,7 @@ int sushi_execute_program(lua_State* state, SushiCode* code)
 		codep = NULL;
 	}
 	if(lbr != 0) {
-		const char* error = lua_tostring(state, -1);
+		const char* error = sushi_error_to_string(state);
 		if(error == NULL || *error == 0) {
 			error = "Failed while processing code data";
 		}
@@ -344,7 +363,7 @@ int sushi_execute_program(lua_State* state, SushiCode* code)
 	lua_pushstring(state, code->fileName);
 	lua_setglobal(state, "_program");
 	if(lua_pcall(state, 0, 1, 1) != LUA_OK) {
-		const char* errstr = lua_tostring(state, -1);
+		const char* errstr = sushi_error_to_string(state);
 		if(errstr != NULL) {
 			sushi_error("Execution failed: `%s'", errstr);
 		}
@@ -358,7 +377,7 @@ int sushi_execute_program(lua_State* state, SushiCode* code)
 	if(lua_isnil(state, lua_gettop(state)) == 0) {
 		lua_getglobal(state, "_args");
 		if(lua_pcall(state, 1, 1, 1) != 0) {
-			sushi_error("Error while running the program: `%s'", lua_tostring(state, -1));
+			sushi_error("Error while running the program: `%s'", sushi_error_to_string(state));
 			return -1;
 		}
 		rv = lua_tonumber(state, lua_gettop(state));

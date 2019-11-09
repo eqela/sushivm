@@ -38,6 +38,7 @@ typedef struct
 }
 SushiCode;
 
+const char* sushi_error_to_string(lua_State* state);
 void sushi_error(const char* fmt, ...);
 int sushi_get_error_count();
 int sushi_has_errors();
