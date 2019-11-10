@@ -99,6 +99,19 @@ int get_system_timezone_seconds(lua_State* state)
 	return 1;
 }
 
+int get_timestamp_details_local(lua_State* state)
+{
+	// FIXME
+	lua_pushnil(state);
+	return 1;
+}
+
+int get_timestamp_details_utc(lua_State* state)
+{
+	// FIXME
+	lua_pushnil(state);
+	return 1;
+}
 
 int start_process(lua_State* state)
 {

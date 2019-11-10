@@ -121,6 +121,38 @@ int get_system_timezone_seconds(lua_State* state)
 	return 1;
 }
 
+int get_timestamp_details_local(lua_State* state)
+{
+	time_t tp = (time_t)luaL_checknumber(state, 2);
+	struct tm lt;
+	memset(&lt, 0, sizeof(struct tm));
+	localtime_r(&tp, &lt);
+	lua_pushnumber(state, lt.tm_wday + 1); // day of week
+	lua_pushnumber(state, lt.tm_mday); // day of month
+	lua_pushnumber(state, lt.tm_mon + 1); // month
+	lua_pushnumber(state, 1900 + lt.tm_year); // year
+	lua_pushnumber(state, lt.tm_hour); // hours
+	lua_pushnumber(state, lt.tm_min); // minutes
+	lua_pushnumber(state, lt.tm_sec); // seconds
+	return 7;
+}
+
+int get_timestamp_details_utc(lua_State* state)
+{
+	time_t tp = (time_t)luaL_checknumber(state, 2);
+	struct tm lt;
+	memset(&lt, 0, sizeof(struct tm));
+	gmtime_r(&tp, &lt);
+	lua_pushnumber(state, lt.tm_wday + 1); // day of week
+	lua_pushnumber(state, lt.tm_mday); // day of month
+	lua_pushnumber(state, lt.tm_mon + 1); // month
+	lua_pushnumber(state, 1900 + lt.tm_year); // year
+	lua_pushnumber(state, lt.tm_hour); // hours
+	lua_pushnumber(state, lt.tm_min); // minutes
+	lua_pushnumber(state, lt.tm_sec); // seconds
+	return 7;
+}
+
 static int do_start_process(lua_State* state, int doFork, int fdin, int fdout, int fderr)
 {
 	const char* ocmd = lua_tostring(state, 1);

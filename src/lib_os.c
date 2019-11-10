@@ -33,6 +33,8 @@ int get_system_type(lua_State* state);
 int get_system_time_seconds(lua_State* state);
 int get_system_time_milliseconds(lua_State* state);
 int get_system_timezone_seconds(lua_State* state);
+int get_timestamp_details_local(lua_State* state);
+int get_timestamp_details_utc(lua_State* state);
 int start_process(lua_State* state);
 int start_piped_process(lua_State* state);
 int replace_process(lua_State* state);
@@ -51,6 +53,8 @@ static const luaL_Reg funcs[] = {
 	{ "get_system_time_seconds", get_system_time_seconds },
 	{ "get_system_time_milliseconds", get_system_time_milliseconds },
 	{ "get_system_timezone_seconds", get_system_timezone_seconds },
+	{ "get_timestamp_details_local", get_timestamp_details_local },
+	{ "get_timestamp_details_utc", get_timestamp_details_utc },
 	{ "start_process", start_process },
 	{ "start_piped_process", start_piped_process },
 	{ "replace_process", replace_process },
