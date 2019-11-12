@@ -49,6 +49,7 @@
 #include "zbuf.h"
 
 static int errors = 0;
+static const char* executable_path = NULL;
 
 const char* sushi_error_to_string(lua_State* state)
 {
@@ -123,8 +124,16 @@ lua_State* sushi_create_new_state()
 	return nstate;
 }
 
+void sushi_set_executable_path(const char* path)
+{
+	executable_path = path;
+}
+
 const char* sushi_get_executable_path()
 {
+	if(executable_path != NULL) {
+		return executable_path;
+	}
 #if defined(SUSHI_SUPPORT_LINUX)
 	static char selfPath[PATH_MAX+1];
 	if(readlink("/proc/self/exe", selfPath, PATH_MAX) < 0) {

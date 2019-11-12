@@ -121,7 +121,15 @@ int main(int c, char** v)
 	signal(SIGPIPE, SIG_IGN);
 	// FIXME: Handle SIGINT, SIGTERM
 #endif
-	SushiCode* code = sushi_code_read_from_executable(sushi_get_executable_path());
+	const char* ep = sushi_get_executable_path();
+	if(ep == NULL) {
+		char* rp = sushi_get_real_path(v[0]);
+		if(rp != NULL) {
+			sushi_set_executable_path(rp);
+			ep = rp;
+		}
+	}
+	SushiCode* code = sushi_code_read_from_executable(ep);
 	if(sushi_has_errors()) {
 		return 1;
 	}

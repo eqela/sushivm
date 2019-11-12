@@ -44,6 +44,7 @@ int sushi_get_error_count();
 int sushi_has_errors();
 int sushi_print_stacktrace(lua_State* state);
 lua_State* sushi_create_new_state();
+void sushi_set_executable_path(const char* path);
 const char* sushi_get_executable_path();
 char* sushi_get_real_path(const char* path);
 SushiCode* sushi_code_read_from_stdin();
