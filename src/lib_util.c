@@ -656,6 +656,46 @@ static int convert_buffer_to_string(lua_State* state)
 	return 1;
 }
 
+static int convert_buffer_ascii_to_string(lua_State* state)
+{
+	void* ptr = luaL_checkudata(state, 2, "_sushi_buffer");
+	if(ptr == NULL) {
+		lua_pushnil(state);
+		return 1;
+	}
+	long size = 0;
+	memcpy(&size, ptr, sizeof(long));
+	unsigned char *pointer = (char*)ptr;
+	long fsize = size;
+	pointer = pointer + sizeof(long);
+	for(int i = 0; i < size; i++) {
+		if(*pointer > 127){
+			fsize++;
+		}
+		pointer++;
+	}
+	unsigned char *out = (char *)malloc(fsize);
+	pointer = (char*)ptr + sizeof(long);
+	int x;
+	for(x = 0; x < fsize; x++) {
+		if(*pointer < 128) {
+			out[x] = *pointer;
+		}
+		else {
+			out[x] = 0xc0 | (*pointer >> 6);
+			out[++x] = 0x80 | (*pointer & 0x3f);
+		}
+		pointer++;
+	}
+	if(fsize > 0) {
+		lua_pushlstring(state, out, fsize);
+	}
+	else {
+		lua_pushstring(state, "");
+	}
+	return 1;
+}
+
 static int sushi_deflate(lua_State* state)
 {
 	void* ptr = luaL_checkudata(state, 2, "_sushi_buffer");
@@ -798,6 +838,7 @@ static const luaL_Reg funcs[] = {
 	{ "get_index_of_substring", get_index_of_substring },
 	{ "convert_string_to_buffer", convert_string_to_buffer },
 	{ "convert_buffer_to_string", convert_buffer_to_string },
+	{ "convert_buffer_ascii_to_string", convert_buffer_ascii_to_string },
 	{ "deflate", sushi_deflate },
 	{ "inflate", sushi_inflate },
 	{ "zip", sushi_zip },
