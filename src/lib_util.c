@@ -37,12 +37,12 @@
 #ifdef SUSHI_SUPPORT_LINUX
 #include <arpa/inet.h>
 #endif
-#define	TWO_BYTES_SEQ_START		0xC2
-#define TWO_BYTES_SEQ_END		0xDF
-#define THREE_BYTES_SEQ_START	0xE0
-#define THREE_BYTES_SEQ_END		0xEF
-#define FOUR_BYTES_SEQ_START	0xF0
-#define FOUR_BYTES_SEQ_END		0xFF
+#define TWO_BYTES_SEQ_START 0xC2
+#define TWO_BYTES_SEQ_END 0xDF
+#define THREE_BYTES_SEQ_START 0xE0
+#define THREE_BYTES_SEQ_END 0xEF
+#define FOUR_BYTES_SEQ_START 0xF0
+#define FOUR_BYTES_SEQ_END 0xFF
 
 // FIXME: Fix all string operations to properly process as UTF8
 
