@@ -37,15 +37,12 @@
 #ifdef SUSHI_SUPPORT_LINUX
 #include <arpa/inet.h>
 #endif
-
-enum {
-	TWO_BYTES_SEQ_START = 194,
-	TWO_BYTES_SEQ_END = 223,
-	THREE_BYTES_SEQ_START = 224,
-	THREE_BYTES_SEQ_END = 239,
-	FOUR_BYTES_SEQ_START = 240,
-	FOUR_BYTES_SEQ_END =  255,
-};
+#define	TWO_BYTES_SEQ_START		0xC2
+#define TWO_BYTES_SEQ_END		0xDF
+#define THREE_BYTES_SEQ_START	0xE0
+#define THREE_BYTES_SEQ_END		0xEF
+#define FOUR_BYTES_SEQ_START	0xF0
+#define FOUR_BYTES_SEQ_END		0xFF
 
 // FIXME: Fix all string operations to properly process as UTF8
 
@@ -563,35 +560,36 @@ static int get_substring(lua_State* state)
 	if(len > 0) {
 		int fstart = start;
 		int flen = len - start;
-		for(int n=0; n<len; n++) {
+		int x = 0;
+		for(int n=0; n < len + x; n++) {
 			unsigned char c = (unsigned char)str[n];
 			if(c >= TWO_BYTES_SEQ_START && c <= TWO_BYTES_SEQ_END) {
-				if(n < start){
+				if(n < fstart){
 					fstart++;
 				}
 				else {
-					flen++;
+					x++;
 				}
 			}
 			else if(c >= THREE_BYTES_SEQ_START && c <= THREE_BYTES_SEQ_END) {
-				if(n < start){
+				if(n < fstart){
 					fstart = fstart + 2;
 				}
 				else {
-					flen = flen + 2;
+					x = x + 2;
 				}
 			}
 			else if(c >= FOUR_BYTES_SEQ_START && c <= FOUR_BYTES_SEQ_END) {
-				if(n < start){
+				if(n < fstart){
 					fstart = fstart + 3;
 				}
 				else {
-					flen = flen + 3;
+					x = x + 3;
 				}
 			}
 
 		}
-		lua_pushlstring(state, str + fstart, flen);
+		lua_pushlstring(state, str + fstart, flen + x);
 	}
 	else {
 		lua_pushstring(state, "");
