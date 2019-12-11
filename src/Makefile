@@ -39,7 +39,7 @@ else
 endif
 
 ifeq ($(VERSION),)
-	VERSION=dev
+	VERSION=`date '+%Y%m%d'`
 endif
 OBJS=main.o \
 	sushi.o \
