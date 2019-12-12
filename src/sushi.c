@@ -46,6 +46,7 @@
 #include "lib_os.h"
 #include "lib_util.h"
 #include "lib_vm.h"
+#include "lib_mod.h"
 #include "zbuf.h"
 
 static int errors = 0;
@@ -109,6 +110,7 @@ static void init_libraries(lua_State* state)
 	lib_os_init(state);
 	lib_util_init(state);
 	lib_vm_init(state);
+	lib_mod_init(state);
 	lua_pushvalue(state ,(-10002));
 	lua_setglobal(state ,"_g");
 }

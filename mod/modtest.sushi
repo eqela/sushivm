@@ -1,0 +1,6 @@
+local handle = _mod:open("mod_hello/mod_hello.so")
+local buffer = _util:convert_string_to_buffer("test xxx yyy")
+_mod:exec(handle, "hello_buffer", buffer)
+_mod:exec(handle, "hello_string", "string argument")
+_mod:exec(handle, "hello_void")
+_mod:close(handle)
