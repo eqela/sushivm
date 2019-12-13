@@ -37,6 +37,12 @@
 #ifdef SUSHI_SUPPORT_LINUX
 #include <arpa/inet.h>
 #endif
+#define TWO_BYTES_SEQ_START 0xC2
+#define TWO_BYTES_SEQ_END 0xDF
+#define THREE_BYTES_SEQ_START 0xE0
+#define THREE_BYTES_SEQ_END 0xEF
+#define FOUR_BYTES_SEQ_START 0xF0
+#define FOUR_BYTES_SEQ_END 0xFF
 
 // FIXME: Fix all string operations to properly process as UTF8
 
@@ -539,20 +545,33 @@ static int get_substring(lua_State* state)
 		return 1;
 	}
 	long start = luaL_checknumber(state, 3);
-	if(start < 0) {
-		start = 0;
-	}
-	if(start > slen) {
-		lua_pushnil(state);
-		return 1;
-	}
 	long end = luaL_checknumber(state, 4);
-	if(end > slen) {
-		end = slen;
+	int ccpos = 0;
+	int sbyte = 0;
+	int ebyte = 0;
+	for(int n=0; n <= slen; n++) {
+		unsigned char c = (unsigned char)str[n];
+		if(ccpos == start) {
+			sbyte = n;
+		}
+		ebyte = n;
+		if(ccpos == end){
+			break;
+		}
+		if(c >= TWO_BYTES_SEQ_START && c <= TWO_BYTES_SEQ_END) {
+			n++;
+		}
+		else if(c >= THREE_BYTES_SEQ_START && c <= THREE_BYTES_SEQ_END) {
+			n = n + 2;
+		}
+		else if(c >= FOUR_BYTES_SEQ_START && c <= FOUR_BYTES_SEQ_END) {
+			n = n + 3;
+		}
+		ccpos++;
 	}
-	long len = end - start;
+	long len = ebyte - sbyte;
 	if(len > 0) {
-		lua_pushlstring(state, str+start, len);
+		lua_pushlstring(state, str + sbyte, len);
 	}
 	else {
 		lua_pushstring(state, "");
