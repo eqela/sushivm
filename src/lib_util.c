@@ -545,51 +545,33 @@ static int get_substring(lua_State* state)
 		return 1;
 	}
 	long start = luaL_checknumber(state, 3);
-	if(start < 0) {
-		start = 0;
-	}
-	if(start > slen) {
-		lua_pushnil(state);
-		return 1;
-	}
 	long end = luaL_checknumber(state, 4);
-	if(end > slen) {
-		end = slen;
-	}
-	long len = end;
-	if(len > 0) {
-		int fstart = start;
-		int flen = len - start;
-		int x = 0;
-		for(int n=0; n < len + x; n++) {
-			unsigned char c = (unsigned char)str[n];
-			if(c >= TWO_BYTES_SEQ_START && c <= TWO_BYTES_SEQ_END) {
-				if(n < fstart){
-					fstart++;
-				}
-				else {
-					x++;
-				}
-			}
-			else if(c >= THREE_BYTES_SEQ_START && c <= THREE_BYTES_SEQ_END) {
-				if(n < fstart){
-					fstart = fstart + 2;
-				}
-				else {
-					x = x + 2;
-				}
-			}
-			else if(c >= FOUR_BYTES_SEQ_START && c <= FOUR_BYTES_SEQ_END) {
-				if(n < fstart){
-					fstart = fstart + 3;
-				}
-				else {
-					x = x + 3;
-				}
-			}
-
+	int ccpos = 0;
+	int sbyte = 0;
+	int ebyte = 0;
+	for(int n=0; n <= slen; n++) {
+		unsigned char c = (unsigned char)str[n];
+		if(ccpos == start) {
+			sbyte = n;
 		}
-		lua_pushlstring(state, str + fstart, flen + x);
+		ebyte = n;
+		if(ccpos == end){
+			break;
+		}
+		if(c >= TWO_BYTES_SEQ_START && c <= TWO_BYTES_SEQ_END) {
+			n++;
+		}
+		else if(c >= THREE_BYTES_SEQ_START && c <= THREE_BYTES_SEQ_END) {
+			n = n + 2;
+		}
+		else if(c >= FOUR_BYTES_SEQ_START && c <= FOUR_BYTES_SEQ_END) {
+			n = n + 3;
+		}
+		ccpos++;
+	}
+	long len = ebyte - sbyte;
+	if(len > 0) {
+		lua_pushlstring(state, str + sbyte, len);
 	}
 	else {
 		lua_pushstring(state, "");
