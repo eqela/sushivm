@@ -29,7 +29,7 @@ LUAJIT_TARGET_SYS=Darwin
 CFLAGS_SYSDEP=-DSUSHI_SUPPORT_MACOS
 LIBS_SYSDEP=
 OBJS_SYSDEP=\
-	lib_net_iomgr_dummy.o \
+	lib_net_iomgr_select.o \
 	lib_os_posix.o \
 	lib_crypto_dummy.o
 EXESUFFIX=

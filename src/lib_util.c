@@ -804,8 +804,8 @@ static int sushi_zip(lua_State* state)
 static int sushi_unzip(lua_State* state)
 {
 	// FIXME: Not implemented
-		lua_pushnil(state);
-		return 1;
+	lua_pushnil(state);
+	return 1;
 }
 
 static void initBufferType(lua_State* state)

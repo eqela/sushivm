@@ -36,7 +36,12 @@
 
 int create_io_manager(lua_State* state)
 {
-	lua_pushnumber(state, epoll_create(1));
+	int v = epoll_create(1);
+	if(v < 0) {
+		lua_pushnil(state);
+		return 1;
+	}
+	lua_pushnumber(state, v);
 	return 1;
 }
 
