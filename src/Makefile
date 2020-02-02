@@ -66,6 +66,14 @@ LIBS=$(LIBS_SYSDEP)
 all: sushi test
 
 ifeq (Darwin,$(LUAJIT_TARGET_SYS))
+libssl:
+	(cd openssl && tar xvf openssl-1.1.1d.tar.gz && mv openssl-1.1.1d build && cd build && ./config no-shared && make)
+else
+libssl:
+	echo Not building openssl
+endif
+
+ifeq (Darwin,$(LUAJIT_TARGET_SYS))
 libluajit:
 	make MACOSX_DEPLOYMENT_TARGET="$(MACOS_GCC_VERSION)" CC="$(CC)" HOST_CC="$(HOST_CC_SYSDEP)" TARGET_SYS="$(LUAJIT_TARGET_SYS)" Q= -C luajit/src libluajit.a
 else
@@ -73,7 +81,7 @@ libluajit:
 	make CC="$(CC)" HOST_CC="$(HOST_CC_SYSDEP)" TARGET_SYS="$(LUAJIT_TARGET_SYS)" Q= -C luajit/src libluajit.a
 endif
 
-sushi: libluajit $(OBJS)
+sushi: libluajit libssl $(OBJS)
 	$(CC) -o sushi$(EXESUFFIX) $(OBJS) luajit/src/libluajit.a $(LDFLAGS) $(LIBS)
 
 test:
@@ -85,4 +93,5 @@ test:
 
 clean:
 	make -C luajit/src clean
+	rm -rf openssl/build
 	rm -f $(OBJS) sushi sushi.exe

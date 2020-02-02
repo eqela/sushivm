@@ -44,6 +44,15 @@
 #define FOUR_BYTES_SEQ_START 0xF0
 #define FOUR_BYTES_SEQ_END 0xFF
 
+static int is_system_little_endian()
+{
+	int xx = 15;
+	if(*((char*)&xx) == 15) {
+		return 1;
+	}
+	return 0;
+}
+
 // FIXME: Fix all string operations to properly process as UTF8
 
 static int set_buffer_byte_lua_syntax(lua_State* state)
@@ -253,27 +262,33 @@ static int create_random_number(lua_State* state)
 	return 1;
 }
 
-static int number_to_buffer32le(lua_State* state)
+static int integer_to_buffer16(lua_State* state)
 {
-	uint32_t number = htonl((uint32_t)luaL_checknumber(state, 2));
+	uint16_t number = (uint16_t)luaL_checknumber(state, 2);
+	int isLittleEndian = luaL_checkint(state, 3);
 	size_t longsz = sizeof(long);
-	void* ptr = lua_newuserdata(state, longsz + 4);
+	void* ptr = lua_newuserdata(state, longsz + 2);
 	luaL_getmetatable(state, "_sushi_buffer");
 	lua_setmetatable(state, -2);
-	long sz = (long)4;
+	long sz = (long)2;
 	memcpy(ptr, &sz, longsz);
 	char* sptr = (char*)&number;
 	ptr += longsz;
-	((char*)ptr)[0] = sptr[3];
-	((char*)ptr)[1] = sptr[2];
-	((char*)ptr)[2] = sptr[1];
-	((char*)ptr)[3] = sptr[0];
+	if(is_system_little_endian() == isLittleEndian) {
+		((char*)ptr)[0] = sptr[0];
+		((char*)ptr)[1] = sptr[1];
+	}
+	else {
+		((char*)ptr)[0] = sptr[1];
+		((char*)ptr)[1] = sptr[0];
+	}
 	return 1;
 }
 
-static int number_to_buffer32be(lua_State* state)
+static int integer_to_buffer32(lua_State* state)
 {
-	uint32_t number = htonl((uint32_t)luaL_checknumber(state, 2));
+	uint32_t number = (uint32_t)luaL_checknumber(state, 2);
+	int isLittleEndian = luaL_checkint(state, 3);
 	size_t longsz = sizeof(long);
 	void* ptr = lua_newuserdata(state, longsz + 4);
 	luaL_getmetatable(state, "_sushi_buffer");
@@ -282,7 +297,115 @@ static int number_to_buffer32be(lua_State* state)
 	memcpy(ptr, &sz, longsz);
 	char* sptr = (char*)&number;
 	ptr += longsz;
-	memcpy(ptr, sptr, 4);
+	if(is_system_little_endian() == isLittleEndian) {
+		((char*)ptr)[0] = sptr[0];
+		((char*)ptr)[1] = sptr[1];
+		((char*)ptr)[2] = sptr[2];
+		((char*)ptr)[3] = sptr[3];
+	}
+	else {
+		((char*)ptr)[0] = sptr[3];
+		((char*)ptr)[1] = sptr[2];
+		((char*)ptr)[2] = sptr[1];
+		((char*)ptr)[3] = sptr[0];
+	}
+	return 1;
+}
+
+static int integer_to_buffer64(lua_State* state)
+{
+	uint64_t number = (uint64_t)luaL_checklong(state, 2);
+	int isLittleEndian = luaL_checkint(state, 3);
+	size_t longsz = sizeof(long);
+	void* ptr = lua_newuserdata(state, longsz + 8);
+	luaL_getmetatable(state, "_sushi_buffer");
+	lua_setmetatable(state, -2);
+	long sz = (long)8;
+	memcpy(ptr, &sz, longsz);
+	char* sptr = (char*)&number;
+	ptr += longsz;
+	if(is_system_little_endian() == isLittleEndian) {
+		((char*)ptr)[0] = sptr[0];
+		((char*)ptr)[1] = sptr[1];
+		((char*)ptr)[2] = sptr[2];
+		((char*)ptr)[3] = sptr[3];
+		((char*)ptr)[4] = sptr[4];
+		((char*)ptr)[5] = sptr[5];
+		((char*)ptr)[6] = sptr[6];
+		((char*)ptr)[7] = sptr[7];
+	}
+	else {
+		((char*)ptr)[0] = sptr[7];
+		((char*)ptr)[1] = sptr[6];
+		((char*)ptr)[2] = sptr[5];
+		((char*)ptr)[3] = sptr[4];
+		((char*)ptr)[4] = sptr[3];
+		((char*)ptr)[5] = sptr[2];
+		((char*)ptr)[6] = sptr[1];
+		((char*)ptr)[7] = sptr[0];
+	}
+	return 1;
+}
+
+static int float_to_buffer32(lua_State* state)
+{
+	float number = (float)luaL_checknumber(state, 2);
+	int isLittleEndian = luaL_checkint(state, 3);
+	size_t longsz = sizeof(long);
+	void* ptr = lua_newuserdata(state, longsz + 4);
+	luaL_getmetatable(state, "_sushi_buffer");
+	lua_setmetatable(state, -2);
+	long sz = (long)4;
+	memcpy(ptr, &sz, longsz);
+	char* sptr = (char*)&number;
+	ptr += longsz;
+	if(is_system_little_endian() == isLittleEndian) {
+		((char*)ptr)[0] = sptr[0];
+		((char*)ptr)[1] = sptr[1];
+		((char*)ptr)[2] = sptr[2];
+		((char*)ptr)[3] = sptr[3];
+	}
+	else {
+		((char*)ptr)[0] = sptr[3];
+		((char*)ptr)[1] = sptr[2];
+		((char*)ptr)[2] = sptr[1];
+		((char*)ptr)[3] = sptr[0];
+	}
+	return 1;
+}
+
+static int double_to_buffer64(lua_State* state)
+{
+	double number = (double)luaL_checknumber(state, 2);
+	int isLittleEndian = luaL_checkint(state, 3);
+	size_t longsz = sizeof(long);
+	void* ptr = lua_newuserdata(state, longsz + 8);
+	luaL_getmetatable(state, "_sushi_buffer");
+	lua_setmetatable(state, -2);
+	long sz = (long)8;
+	memcpy(ptr, &sz, longsz);
+	char* sptr = (char*)&number;
+	ptr += longsz;
+	if(is_system_little_endian() == isLittleEndian) {
+		((char*)ptr)[0] = sptr[0];
+		((char*)ptr)[1] = sptr[1];
+		((char*)ptr)[2] = sptr[2];
+		((char*)ptr)[3] = sptr[3];
+		((char*)ptr)[4] = sptr[4];
+		((char*)ptr)[5] = sptr[5];
+		((char*)ptr)[6] = sptr[6];
+		((char*)ptr)[7] = sptr[7];
+	}
+	else {
+		((char*)ptr)[0] = sptr[7];
+		((char*)ptr)[1] = sptr[6];
+		((char*)ptr)[2] = sptr[5];
+		((char*)ptr)[3] = sptr[4];
+		((char*)ptr)[4] = sptr[3];
+		((char*)ptr)[5] = sptr[2];
+		((char*)ptr)[6] = sptr[1];
+		((char*)ptr)[7] = sptr[0];
+	}
 	return 1;
 }
 
@@ -834,8 +957,11 @@ static const luaL_Reg funcs[] = {
 	{ "create_buffer", create_buffer },
 	{ "create_random_number_generator", create_random_number_generator },
 	{ "create_random_number", create_random_number },
-	{ "number_to_buffer32le", number_to_buffer32le },
-	{ "number_to_buffer32be", number_to_buffer32be },
+	{ "integer_to_buffer16", integer_to_buffer16 },
+	{ "integer_to_buffer32", integer_to_buffer32 },
+	{ "integer_to_buffer64", integer_to_buffer64 },
+	{ "float_to_buffer32", float_to_buffer32 },
+	{ "double_to_buffer64", double_to_buffer64 },
 	{ "network_bytes_to_host16", network_bytes_to_host16 },
 	{ "network_bytes_to_host32", network_bytes_to_host32 },
 	{ "convert_to_integer", convert_to_integer },

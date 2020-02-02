@@ -163,7 +163,7 @@ static int connect_tcp_socket(lua_State* state)
 	snprintf(sport, 255, "%d", port);
 	struct addrinfo hints, *res;
 	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_UNSPEC;
+	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	if(getaddrinfo(host, sport, &hints, &res) != 0) {
 		lua_pushnumber(state, -1);
@@ -179,22 +179,6 @@ static int connect_tcp_socket(lua_State* state)
 		lua_pushnumber(state, -1);
 		return 1;
 	}
-	/*
-	struct hostent* hostent = gethostbyname(host);
-	if(hostent == NULL) {
-		lua_pushnumber(state, -1);
-		return 1;
-	}
-	struct sockaddr_in addr;
-	memset(&addr, 0, sizeof(struct sockaddr_in));
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
-	memcpy(&addr.sin_addr, hostent->h_addr_list[0], hostent->h_length);
-	if(connect(fd, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) != 0) {
-		lua_pushnumber(state, -1);
-		return 1;
-	}
-	*/
 	lua_pushnumber(state, 0);
 	return 1;
 }
