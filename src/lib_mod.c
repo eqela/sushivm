@@ -53,7 +53,7 @@ int mod_open(lua_State* state)
 	return 1;
 }
 
-int mod_exec(lua_State* state)
+void* get_symbol_pointer_for_exec(lua_State* state)
 {
 	void* ptr = luaL_checkudata(state, 2, "_sushi_mod");
 	void* symp = NULL;
@@ -62,13 +62,18 @@ int mod_exec(lua_State* state)
 #else
 	const char* sym = lua_tostring(state, 3);
 	if(ptr == NULL || sym == NULL) {
-		lua_pushnil(state);
-		return 1;
+		return NULL;
 	}
 	void* handle = NULL;
 	memcpy(&handle, ptr, sizeof(void*));
 	symp = dlsym(handle, sym);
 #endif
+	return symp;
+}
+
+int mod_exec(lua_State* state)
+{
+	void* symp = get_symbol_pointer_for_exec(state);
 	if(symp == NULL) {
 		lua_pushnil(state);
 		return 1;
@@ -116,6 +121,37 @@ int mod_exec(lua_State* state)
 	return 0;
 }
 
+int mod_exec1(lua_State* state)
+{
+	void* symp = get_symbol_pointer_for_exec(state);
+	if(symp == NULL) {
+		lua_pushnil(state);
+		return 1;
+	}
+	void (*funcp)() = (void(*)())symp;
+	funcp();
+	return 0;
+}
+
+int mod_exec2(lua_State* state)
+{
+	void* symp = get_symbol_pointer_for_exec(state);
+	if(symp == NULL) {
+		lua_pushnil(state);
+		return 1;
+	}
+	char* (*funcp)() = (char*(*)())symp;
+	char* rv = funcp();
+	if(rv != NULL) {
+		lua_pushstring(state, rv);
+		free(rv);
+	}
+	else {
+		lua_pushnil(state);
+	}
+	return 1;
+}
+
 int mod_close_gc(lua_State* state)
 {
 	void* ptr = luaL_checkudata(state, 1, "_sushi_mod");
@@ -145,6 +181,8 @@ int mod_close(lua_State* state)
 static const luaL_Reg funcs[] = {
 	{ "open", mod_open },
 	{ "exec", mod_exec },
+	{ "exec1", mod_exec1 },
+	{ "exec2", mod_exec2 },
 	{ "close", mod_close },
 	{ NULL, NULL }
 };
