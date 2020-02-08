@@ -90,7 +90,7 @@ int get_system_type(lua_State* state)
 #if defined(SUSHI_SUPPORT_LINUX)
 	lua_pushstring(state, "linux");
 #elif defined(SUSHI_SUPPORT_MACOS)
-	lua_pushstring(state, "macosx");
+	lua_pushstring(state, "macos");
 #else
 #error System type is not defined
 #endif

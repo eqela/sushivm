@@ -52,11 +52,12 @@ OBJS=main.o \
 	lib_util.o \
 	lib_vm.o \
 	lib_mod.o \
+	lib_zip.o \
 	zlib/deflate.o zlib/inffast.o zlib/inflate.o zlib/inftrees.o zlib/zutil.o zlib/trees.o zlib/adler32.o zlib/crc32.o \
 	minizip/unzip.o minizip/zip.o minizip/ioapi.o \
 	$(OBJS_SYSDEP)
 CC=$(CC_SYSDEP)
-CFLAGS=-Iluajit/src -Izlib -Iminizip -DSUSHI_VERSION=\"$(VERSION)\" $(CFLAGS_SYSDEP)
+CFLAGS=-Iluajit/src -Izlib -Iminizip -DSUSHI_VERSION=\"$(VERSION)\" -DSUSHI_SUPPORT_ZLIB $(CFLAGS_SYSDEP)
 LDFLAGS=$(LDFLAGS_SYSDEP)
 ifeq ($(STATIC_BUILD),yes)
 	LDFLAGS += -static
@@ -67,7 +68,9 @@ all: sushi test
 
 ifeq (Darwin,$(LUAJIT_TARGET_SYS))
 libssl:
-	(cd openssl && tar xvf openssl-1.1.1d.tar.gz && mv openssl-1.1.1d build && cd build && ./config no-shared && make)
+	if [ ! -f openssl/build/libssl.a ]; then \
+		(cd openssl && tar xvf openssl-1.1.1d.tar.gz && rm -rf build && mv openssl-1.1.1d build && cd build && ./config no-shared && make) ; \
+	fi
 else
 libssl:
 	echo Not building openssl

@@ -32,8 +32,6 @@
 #include <stdint.h>
 #include "lib_util.h"
 #include "zbuf.h"
-#include "zip.h"
-#include "unzip.h"
 #ifdef SUSHI_SUPPORT_LINUX
 #include <arpa/inet.h>
 #endif
@@ -249,7 +247,7 @@ static int create_random_number_generator(lua_State* state)
 static int create_random_number(lua_State* state)
 {
 	void* ptr = lua_touserdata(state, 2);
-	int seed = 0;
+	unsigned int seed = 0;
 	memcpy(&seed, ptr, sizeof(int));
 	unsigned int result = 0;
 #if defined(SUSHI_SUPPORT_WIN32)
@@ -807,7 +805,7 @@ static int convert_buffer_ascii_to_string(lua_State* state)
 	}
 	long size = 0;
 	memcpy(&size, ptr, sizeof(long));
-	unsigned char *pointer = (char*)ptr;
+	unsigned char *pointer = (unsigned char*)ptr;
 	long fsize = size;
 	pointer = pointer + sizeof(long);
 	for(int i = 0; i < size; i++) {
@@ -816,8 +814,8 @@ static int convert_buffer_ascii_to_string(lua_State* state)
 		}
 		pointer++;
 	}
-	unsigned char *out = (char *)malloc(fsize);
-	pointer = (char*)ptr + sizeof(long);
+	unsigned char *out = (unsigned char *)malloc(fsize);
+	pointer = (unsigned char*)ptr + sizeof(long);
 	int x;
 	for(x = 0; x < fsize; x++) {
 		if(*pointer < 128) {
@@ -830,7 +828,7 @@ static int convert_buffer_ascii_to_string(lua_State* state)
 		pointer++;
 	}
 	if(fsize > 0) {
-		lua_pushlstring(state, out, fsize);
+		lua_pushlstring(state, (const char*)out, fsize);
 	}
 	else {
 		lua_pushstring(state, "");
@@ -906,31 +904,6 @@ static int sushi_inflate(lua_State* state)
 	return 1;
 }
 
-static int sushi_zip(lua_State* state)
-{
-	// FIXME: Incomplete
-	const char* src = luaL_checkstring(state, 2);
-	const char* dst = luaL_checkstring(state, 3);
-	if(src == NULL || dst == NULL) {
-		lua_pushboolean(state, 0);
-		return 1;
-	}
-	zipFile zip = zipOpen64(dst, APPEND_STATUS_CREATE);
-	if(zip == NULL) {
-		lua_pushboolean(state, 0);
-		return 1;
-	}
-		lua_pushnil(state);
-		return 1;
-}
-
-static int sushi_unzip(lua_State* state)
-{
-	// FIXME: Not implemented
-	lua_pushnil(state);
-	return 1;
-}
-
 static void initBufferType(lua_State* state)
 {
 	static const luaL_Reg bufferMethods[] = {
@@ -986,8 +959,6 @@ static const luaL_Reg funcs[] = {
 	{ "convert_buffer_ascii_to_string", convert_buffer_ascii_to_string },
 	{ "deflate", sushi_deflate },
 	{ "inflate", sushi_inflate },
-	{ "zip", sushi_zip },
-	{ "unzip", sushi_unzip },
 	{ NULL, NULL }
 };
 

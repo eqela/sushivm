@@ -47,6 +47,7 @@
 #include "lib_util.h"
 #include "lib_vm.h"
 #include "lib_mod.h"
+#include "lib_zip.h"
 #include "zbuf.h"
 
 static int errors = 0;
@@ -111,6 +112,7 @@ static void init_libraries(lua_State* state)
 	lib_util_init(state);
 	lib_vm_init(state);
 	lib_mod_init(state);
+	lib_zip_init(state);
 	lua_pushvalue(state ,(-10002));
 	lua_setglobal(state ,"_g");
 }
@@ -211,7 +213,7 @@ SushiCode* sushi_code_read_from_stdin()
 		free(v);
 		return NULL;
 	}
-	vv->data = v;
+	vv->data = (unsigned char*)v;
 	vv->dataSize = (unsigned long)sz;
 	vv->fileName = strdup("<stdin>");
 	return vv;
@@ -263,7 +265,7 @@ SushiCode* sushi_code_read_from_file(const char* path)
 		free(rpath);
 		return NULL;
 	}
-	vv->data = v;
+	vv->data = (unsigned char*)v;
 	vv->dataSize = sz;
 	vv->fileName = rpath;
 	return vv;
@@ -317,7 +319,7 @@ SushiCode* sushi_code_read_from_executable(const char* exepath)
 		free(data);
 		return NULL;
 	}
-	vv->data = data;
+	vv->data = (unsigned char*)data;
 	vv->dataSize = codesize;
 	vv->fileName = strdup(exepath);
 	return vv;
@@ -358,7 +360,7 @@ int sushi_execute_program(lua_State* state, SushiCode* code)
 		}
 		freecode = 1;
 	}
-	int lbr = luaL_loadbuffer(state, codep, codeplen, code->fileName);
+	int lbr = luaL_loadbuffer(state, (const char*)codep, codeplen, code->fileName);
 	if(freecode) {
 		free(codep);
 		codep = NULL;
