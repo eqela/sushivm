@@ -1,7 +1,7 @@
 
 #
 # This file is part of SushiVM
-# Copyright (c) 2019 Eqela Oy
+# Copyright (c) 2019-2020 Eqela Oy
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
