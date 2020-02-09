@@ -77,17 +77,22 @@ int zip_write_start_file(lua_State* state)
 	}
 	unsigned int fileAttributes = (unsigned int)luaL_checknumber(state, 5) & 0xffff;
 	int large = (int)luaL_checknumber(state, 6);
-	struct tm tm;
 	time_t tt = (time_t)timestamp;
+#ifdef SUSHI_SUPPORT_WIN32
+	struct tm* tmv = localtime(&tt);
+#else
+	struct tm tm;
 	localtime_r(&tt, &tm);
+	struct tm* tmv = &tm;
+#endif
 	zip_fileinfo zif;
 	memset(&zif, 0, sizeof(zip_fileinfo));
-	zif.tmz_date.tm_sec = tm.tm_sec;
-	zif.tmz_date.tm_min = tm.tm_min;
-	zif.tmz_date.tm_hour = tm.tm_hour;
-	zif.tmz_date.tm_mday = tm.tm_mday;
-	zif.tmz_date.tm_mon = tm.tm_mon;
-	zif.tmz_date.tm_year = tm.tm_year;
+	zif.tmz_date.tm_sec = tmv->tm_sec;
+	zif.tmz_date.tm_min = tmv->tm_min;
+	zif.tmz_date.tm_hour = tmv->tm_hour;
+	zif.tmz_date.tm_mday = tmv->tm_mday;
+	zif.tmz_date.tm_mon = tmv->tm_mon;
+	zif.tmz_date.tm_year = tmv->tm_year;
 	zif.dosDate = 0;
 	zif.internal_fa = 0;
 	zif.external_fa = fileAttributes << 16;
