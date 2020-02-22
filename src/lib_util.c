@@ -748,7 +748,7 @@ static int get_index_of_substring(lua_State* state)
 		lua_pushnumber(state, -1);
 		return 1;
 	}
-	const char* p = str;
+	const char* p = str + start;
 	while(*p != 0) {
 		if(!strncmp(p, ss, sslen)) {
 			lua_pushnumber(state, (int)(p - str));
