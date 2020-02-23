@@ -191,6 +191,15 @@ char* sushi_get_real_path(const char* path)
 #endif
 }
 
+SushiCode* sushi_code_for_buffer(unsigned char* data, unsigned long dataSize, char* fileName)
+{
+	SushiCode* vv = (SushiCode*)malloc(sizeof(SushiCode));
+	vv->data = data;
+	vv->dataSize = dataSize;
+	vv->fileName = fileName;
+	return vv;
+}
+
 SushiCode* sushi_code_read_from_stdin()
 {
 	size_t sz = 0;
@@ -340,10 +349,8 @@ SushiCode* sushi_code_free(SushiCode* code)
 	return NULL;
 }
 
-int sushi_execute_program(lua_State* state, SushiCode* code)
+int sushi_load_code(lua_State* state, SushiCode* code)
 {
-	// NOTE: Arguments to the program are supplied via the global _args parameter
-	// that needs to be set prior to calling this function.
 	if(code == NULL) {
 		return -1;
 	}
@@ -353,6 +360,10 @@ int sushi_execute_program(lua_State* state, SushiCode* code)
 	if(codep == NULL || codeplen < 4) {
 		return -1;
 	}
+	char* fileName = code->fileName;
+	if(fileName == NULL) {
+		fileName = "__code__";
+	}
 	if(codep[0] == 0x00 && codep[1] == 0x64 && codep[2] == 0x65 && codep[3] == 0x66) {
 		zbuf_inflate(codep+4, codeplen-4, &codep, &codeplen);
 		if(codep == NULL || codeplen < 1) {
@@ -360,7 +371,7 @@ int sushi_execute_program(lua_State* state, SushiCode* code)
 		}
 		freecode = 1;
 	}
-	int lbr = luaL_loadbuffer(state, (const char*)codep, codeplen, code->fileName);
+	int lbr = luaL_loadbuffer(state, (const char*)codep, codeplen, fileName);
 	if(freecode) {
 		free(codep);
 		codep = NULL;
@@ -370,11 +381,21 @@ int sushi_execute_program(lua_State* state, SushiCode* code)
 		if(error == NULL || *error == 0) {
 			error = "Failed while processing code data";
 		}
-		sushi_error("`%s': `%s'", code->fileName, error);
+		sushi_error("`%s': `%s'", fileName, error);
 		return -1;
 	}
-	lua_pushstring(state, code->fileName);
+	lua_pushstring(state, fileName);
 	lua_setglobal(state, "_program");
+	return 0;
+}
+
+int sushi_execute_program(lua_State* state, SushiCode* code)
+{
+	// NOTE: Arguments to the program are supplied via the global _args parameter
+	// that needs to be set prior to calling this function.
+	if(sushi_load_code(state, code) != 0) {
+		return -1;
+	}
 	if(lua_pcall(state, 0, 1, 1) != LUA_OK) {
 		const char* errstr = sushi_error_to_string(state);
 		if(errstr != NULL) {

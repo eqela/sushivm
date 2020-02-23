@@ -159,3 +159,9 @@ int disown_process(lua_State* state)
 	// FIXME
 	return 0;
 }
+
+int start_thread(lua_State* state)
+{
+	// FIXME
+	return 0;
+}

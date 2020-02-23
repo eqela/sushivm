@@ -30,6 +30,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
+#include <pthread.h>
 #include "lib_os.h"
 
 extern char **environ;
@@ -323,25 +324,6 @@ int is_process_alive(lua_State* state)
 		lua_pushnumber(state, 0);
 	}
 	return 1;
-	/*
-	int status = 0;
-	int r = waitpid(pid, &status, WNOHANG);
-	if(r == pid) {
-		if(WIFEXITED(status)) {
-			lua_pushnumber(state, 0);
-		}
-		else {
-			lua_pushnumber(state, 1);
-		}
-	}
-	else if(r == 0) {
-		lua_pushnumber(state, 1);
-	}
-	else {
-		lua_pushnumber(state, 0);
-	}
-	return 1;
-	*/
 }
 
 int send_process_signal(lua_State* state)
@@ -358,60 +340,119 @@ int disown_process(lua_State* state)
 	return 0;
 }
 
-/*
-int startThread(lua_State* state)
+static void* _start_thread_main(void* arg)
 {
-	lua_remove(state, 1);
-	ThreadArgs* args = thread_args_create();
-    unsigned long codeLen;
-    const char *codeBuf = lua_tolstring(state, 1, &codeLen);
-	if(codeBuf != NULL && codeLen > 0) {
-		args->code = buffer_create(codeBuf, codeLen);
+	lua_State* state = (lua_State*)arg;
+	if(lua_pcall(state, 0, 0, 1) != LUA_OK) {
+		const char* errstr = sushi_error_to_string(state);
+		if(errstr != NULL) {
+			sushi_error("Thread code execution failed: `%s'", errstr);
+		}
+		else {
+			sushi_error("Thread code execution failed.");
+		}
 	}
-	unsigned long paramLen;
-	const char* paramBuf = lua_tolstring(state, 2, &paramLen);
-	if(paramBuf != NULL && paramLen > 0) {
-		args->param = buffer_create(paramBuf, paramLen);
+	lua_getglobal(state, "_main");
+	if(lua_isnil(state, lua_gettop(state)) == 0) {
+		lua_getglobal(state, "_args");
+		if(lua_pcall(state, 1, 1, 1) != 0) {
+			sushi_error("Error while running the program: `%s'", sushi_error_to_string(state));
+		}
 	}
-	args->state = NULL;
-	pthread_t thread;
-	if(pthread_create(&thread, NULL, _threadMain, (void*)args) != 0) {
-		thread_args_free(args);
-		lua_pushnumber(state, 0);
-		return 1;
+	lua_getglobal(state, "_pipefd");
+	if(lua_isnumber(state, -1)) {
+		int pipefd = lua_tonumber(state, -1);
+		if(pipefd >= 0) {
+			close(pipefd);
+		}
 	}
-	lua_pushnumber(state, (int)thread);
-	return 1;
+	lua_close(state);
+	return NULL;
 }
 
-void* _threadMain(void* arg)
+int start_thread(lua_State* state)
 {
-	ThreadArgs* args = (ThreadArgs*)arg;
-	if(args == NULL) {
-		return (void*)1;
+	// parameters
+	void* codeptr = luaL_checkudata(state, 2, "_sushi_buffer");
+	if(codeptr == NULL) {
+		lua_pushnumber(state, -1);
+		return 1;
 	}
-	void* rv = 0;
-	lua_State* state = sushi_create_new_state();
-	if(state != NULL) {
-		if(args->code != NULL) {
-			luaL_loadbuffer(state, args->code->pointer, args->code->size, "__code__");
-			lua_call(state, 0, 0);
+	long codesize = 0;
+	memcpy(&codesize, codeptr, sizeof(long));
+	codeptr += sizeof(long);
+	void* inputptr = NULL;
+	long inputsize = 0;
+	if(lua_isuserdata(state, 3)) {
+		inputptr = luaL_checkudata(state, 3, "_sushi_buffer");
+		if(inputptr == NULL) {
+			lua_pushnumber(state, -1);
+			return 1;
 		}
-		lua_getglobal(state, "_threadMain");
-		if(lua_isnil(state, lua_gettop(state)) == 0) {
-			int params = 0;
-			if(args->param != NULL) {
-				lua_pushlstring(state, args->param->pointer, args->param->size);
-				params ++;
-			}
-			if(lua_pcall(state, params, 0, 1) != 0) {
-				sushi_error("Error while running _threadMain: `%s'", lua_tostring(state, -1));
-				rv = (void*)1;
-			}
-		}
-		lua_close(state);
+		memcpy(&inputsize, inputptr, sizeof(long));
+		inputptr += sizeof(long);
 	}
-	thread_args_free(args);
-	return (void*)rv;
+	long withPipe = luaL_checknumber(state, 4);
+	// create new lua state
+	lua_State* nstate = sushi_create_new_state();
+	if(nstate == NULL) {
+		lua_pushnumber(state, -1);
+		return 1;
+	}
+	// load code
+	SushiCode* code = sushi_code_for_buffer((unsigned char*)codeptr, (unsigned long)codesize, "__threadcode__");
+	if(code == NULL) {
+		lua_close(nstate);
+		lua_pushnumber(state, -1);
+		return 1;
+	}
+	int lcr = sushi_load_code(nstate, code);
+	code->data = NULL;
+	code->fileName = NULL;
+	code = sushi_code_free(code);
+	if(lcr != 0) {
+		lua_close(nstate);
+		lua_pushnumber(state, -1);
+		return 1;
+	}
+	// input parameter for the thread code
+	void* ptr = lua_newuserdata(nstate, sizeof(long) + (size_t)inputsize);
+	luaL_getmetatable(nstate, "_sushi_buffer");
+	lua_setmetatable(nstate, -2);
+	memcpy(ptr, &inputsize, sizeof(long));
+	memcpy(ptr + sizeof(long), inputptr, inputsize);
+	lua_setglobal(nstate, "_input");
+	// pipe objects
+	int pipefds[2];
+	pipefds[0] = -1;
+	pipefds[1] = -1;
+	int v = 0;
+	if(withPipe == 1) {
+		if(pipe(pipefds) != 0) {
+			lua_close(nstate);
+			lua_pushnumber(state, -1);
+			return 1;
+		}
+		lua_pushnumber(nstate, pipefds[1]);
+		lua_setglobal(nstate, "_pipefd");
+		v = pipefds[0];
+	}
+	lua_pushnil(nstate);
+	lua_setglobal(nstate, "_args");
+	// start thread
+	pthread_t thread;
+	if(pthread_create(&thread, NULL, _start_thread_main, (void*)nstate) != 0) {
+		lua_close(nstate);
+		if(pipefds[0] >= 0) {
+			close(pipefds[0]);
+		}
+		if(pipefds[1] >= 0) {
+			close(pipefds[1]);
+		}
+		lua_pushnumber(state, -1);
+		return 1;
+	}
+	pthread_detach(thread);
+	lua_pushnumber(state, v);
+	return 1;
 }
-*/

@@ -46,11 +46,13 @@ int sushi_print_stacktrace(lua_State* state);
 lua_State* sushi_create_new_state();
 void sushi_set_executable_path(const char* path);
 const char* sushi_get_executable_path();
-char* sushi_get_real_path(const char* path);
+char* sushi_get_real_path(const char* path);\
+SushiCode* sushi_code_for_buffer(unsigned char* data, unsigned long dataSize, char* fileName);
 SushiCode* sushi_code_read_from_stdin();
 SushiCode* sushi_code_read_from_file(const char* path);
 SushiCode* sushi_code_read_from_executable(const char* path);
 SushiCode* sushi_code_free(SushiCode* code);
+int sushi_load_code(lua_State* state, SushiCode* code);
 int sushi_execute_program(lua_State* state, SushiCode* code);
 void* sushi_profiler_start(lua_State* state, const char* outputFile);
 void* sushi_profiler_stop(lua_State* state, void* profiler);

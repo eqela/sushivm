@@ -42,6 +42,7 @@ int wait_for_process(lua_State* state);
 int is_process_alive(lua_State* state);
 int send_process_signal(lua_State* state);
 int disown_process(lua_State* state);
+int start_thread(lua_State* state);
 
 static const luaL_Reg funcs[] = {
 	{ "sleep_seconds", sleep_seconds },
@@ -62,6 +63,7 @@ static const luaL_Reg funcs[] = {
 	{ "is_process_alive", is_process_alive },
 	{ "send_process_signal", send_process_signal },
 	{ "disown_process", disown_process },
+	{ "start_thread", start_thread },
 	{ NULL, NULL }
 };
 
