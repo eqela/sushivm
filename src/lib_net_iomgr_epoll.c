@@ -107,7 +107,7 @@ int update_io_listener(lua_State* state)
 		event.events = EPOLLIN | EPOLLOUT;
 	}
 	else {
-		lua_pushnumber(state, 0);
+		lua_pushnumber(state, 1);
 		return 1;
 	}
 	event.data.fd = objref;
@@ -196,7 +196,8 @@ int execute_io_manager(lua_State* state)
 			_callLuaMethodWithObjref(state, objref, "onWriteReady");
 		}
 	}
-	return r;
+	lua_pushnumber(state, r);
+	return 1;
 }
 
 int close_io_manager(lua_State* state)
