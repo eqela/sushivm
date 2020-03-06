@@ -444,6 +444,14 @@ int sushi_load_code(lua_State* state, SushiCode* code)
 		freecode = 1;
 	}
 	int lbr = luaL_loadbuffer(state, (const char*)codep, codeplen, fileName);
+	if(lbr == 0) {
+		void* ptr = lua_newuserdata(state, sizeof(long) + (size_t)codeplen);
+		luaL_getmetatable(state, "_sushi_buffer");
+		lua_setmetatable(state, -2);
+		memcpy(ptr, &codeplen, sizeof(long));
+		memcpy(ptr + sizeof(long), codep, codeplen);
+		lua_setglobal(state, "_code");
+	}
 	if(freecode) {
 		free(codep);
 		codep = NULL;
@@ -458,12 +466,6 @@ int sushi_load_code(lua_State* state, SushiCode* code)
 	}
 	lua_pushstring(state, fileName);
 	lua_setglobal(state, "_program");
-	void* ptr = lua_newuserdata(state, sizeof(long) + (size_t)codeplen);
-	luaL_getmetatable(state, "_sushi_buffer");
-	lua_setmetatable(state, -2);
-	memcpy(ptr, &codeplen, sizeof(long));
-	memcpy(ptr + sizeof(long), codep, codeplen);
-	lua_setglobal(state, "_code");
 	return 0;
 }
 

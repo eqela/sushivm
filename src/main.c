@@ -168,7 +168,7 @@ int main(int c, char** v)
 		if(code == NULL) {
 			code = sushi_code_read_from_file(filename);
 			if(code == NULL) {
-				sushi_error("Failed to read code file: `%s'", v[1]);
+				sushi_error("Failed to read code file: `%s'", filename);
 				return 1;
 			}
 		}
