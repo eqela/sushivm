@@ -53,6 +53,87 @@
 static int errors = 0;
 static const char* executable_path = NULL;
 
+int sushi_print_stacktrace(lua_State* state)
+{
+	const char* e1 = sushi_error_to_string(state);
+	luaL_traceback(state, state, NULL, 0);
+	const char* e2 = sushi_error_to_string(state);
+	if(e1 != NULL && e2 != NULL) {
+		lua_pop(state, 2);
+		char* v = (char*)malloc(strlen(e1) + 1 + strlen(e2));
+		strcpy(v, e1);
+		strcat(v, "\n");
+		strcat(v, e2);
+		lua_pushstring(state, v);
+		free(v);
+		return 1;
+	}
+	if(e1 != NULL || e2 != NULL) {
+		return 1;
+	}
+	return 0;
+}
+
+int sushi_pcall(lua_State* state, int nargs, int nret)
+{
+	int hpos = lua_gettop(state) - nargs;
+	lua_pushcfunction(state, sushi_print_stacktrace);
+	lua_insert(state, hpos);
+	int r = lua_pcall(state, nargs, nret, hpos);
+	lua_remove(state, hpos);
+	return r;
+}
+
+void sushi_getglobal(lua_State* state, const char* name)
+{
+	if(name == NULL) {
+		lua_pushnil(state);
+		return;
+	}
+	const char* dot = strchr(name, '.');
+	if(dot == NULL) {
+		lua_getglobal(state, name);
+		return;
+	}
+	int orig = lua_gettop(state);
+	int counter = 0;
+	int idx = -1;
+	const char* p = name;
+	while(1) {
+		int compl = dot-p;
+		char* comp = (char*)malloc(compl+1);
+		strncpy(comp, p, compl);
+		comp[compl] = 0;
+		if(idx < 0) {
+			lua_getglobal(state, comp);
+		}
+		else if(lua_istable(state, idx) == 0) {
+			lua_pushnil(state);
+		}
+		else {
+			lua_pushstring(state, comp);
+			lua_gettable(state, idx);
+		}
+		if(lua_isnil(state, -1)) {
+			lua_pushnil(state);
+			return;
+		}
+		idx = lua_gettop(state);
+		counter ++;
+		free(comp);
+		if(*dot == 0) {
+			break;
+		}
+		p = dot + 1;
+		dot = strchr(p, '.');
+		if(dot == NULL) {
+			dot = p + strlen(p);
+		}
+	}
+	lua_insert(state, orig+1);
+	lua_pop(state, counter-1);
+}
+
 const char* sushi_error_to_string(lua_State* state)
 {
 	const char* v = lua_tostring(state, -1);
@@ -95,14 +176,6 @@ int sushi_has_errors()
 	return 0;
 }
 
-int sushi_print_stacktrace(lua_State* state)
-{
-	luaL_traceback(state, state, NULL, 0);
-	sushi_error("%s", sushi_error_to_string(state));
-	lua_pop(state, 1);
-	return 1;
-}
-
 static void init_libraries(lua_State* state)
 {
 	lib_crypto_init(state);
@@ -123,7 +196,6 @@ lua_State* sushi_create_new_state()
 	if(nstate == NULL) {
 		return NULL;
 	}
-	lua_pushcfunction(nstate, sushi_print_stacktrace);
 	init_libraries(nstate);
 	return nstate;
 }
@@ -386,17 +458,24 @@ int sushi_load_code(lua_State* state, SushiCode* code)
 	}
 	lua_pushstring(state, fileName);
 	lua_setglobal(state, "_program");
+	void* ptr = lua_newuserdata(state, sizeof(long) + (size_t)codeplen);
+	luaL_getmetatable(state, "_sushi_buffer");
+	lua_setmetatable(state, -2);
+	memcpy(ptr, &codeplen, sizeof(long));
+	memcpy(ptr + sizeof(long), codep, codeplen);
+	lua_setglobal(state, "_code");
 	return 0;
 }
 
 int sushi_execute_program(lua_State* state, SushiCode* code)
 {
+	struct timeval time1, time2, time3;
 	// NOTE: Arguments to the program are supplied via the global _args parameter
 	// that needs to be set prior to calling this function.
 	if(sushi_load_code(state, code) != 0) {
 		return -1;
 	}
-	if(lua_pcall(state, 0, 1, 1) != LUA_OK) {
+	if(sushi_pcall(state, 0, 1) != LUA_OK) {
 		const char* errstr = sushi_error_to_string(state);
 		if(errstr != NULL) {
 			sushi_error("Execution failed: `%s'", errstr);
@@ -410,8 +489,8 @@ int sushi_execute_program(lua_State* state, SushiCode* code)
 	lua_getglobal(state, "_main");
 	if(lua_isnil(state, lua_gettop(state)) == 0) {
 		lua_getglobal(state, "_args");
-		if(lua_pcall(state, 1, 1, 1) != 0) {
-			sushi_error("Error while running the program: `%s'", sushi_error_to_string(state));
+		if(sushi_pcall(state, 1, 1) != LUA_OK) {
+			sushi_error("Error while executing the program: `%s'", sushi_error_to_string(state));
 			return -1;
 		}
 		rv = lua_tonumber(state, lua_gettop(state));

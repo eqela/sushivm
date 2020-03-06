@@ -11,3 +11,4 @@ lj_recdef.h
 lj_vm.S
 sushi
 *.exe
+build

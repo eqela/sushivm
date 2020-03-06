@@ -97,47 +97,12 @@ static int unpack_array(lua_State* state)
 
 static int get_global(lua_State* state)
 {
-	lua_remove(state, 1);
-	const char* name = lua_tostring(state, 1);
+	const char* name = lua_tostring(state, 2);
 	if(name == NULL) {
 		lua_pushnil(state);
 		return 1;
 	}
-	const char* dot = strchr(name, '.');
-	if(dot == NULL) {
-		lua_getglobal(state, name);
-		return 1;
-	}
-	int orig = lua_gettop(state);
-	int counter = 0;
-	int idx = -1;
-	const char* p = name;
-	while(1) {
-		int compl = dot-p;
-		char* comp = (char*)malloc(compl+1);
-		strncpy(comp, p, compl);
-		comp[compl] = 0;
-		if(idx < 0) {
-			lua_getglobal(state, comp);
-			idx = lua_gettop(state);
-		}
-		else {
-			lua_pushstring(state, comp);
-			lua_gettable(state, idx);
-		}
-		counter ++;
-		free(comp);
-		if(*dot == 0) {
-			break;
-		}
-		p = dot + 1;
-		dot = strchr(p, '.');
-		if(dot == NULL) {
-			dot = p + strlen(p);
-		}
-	}
-	lua_insert(state, orig+1);
-	lua_pop(state, counter-1);
+	sushi_getglobal(state, name);
 	return 1;
 }
 
@@ -698,6 +663,89 @@ static int unserialize_object(lua_State* state)
 	return mar_decode(state, buf, len);
 }
 
+int prepare_interpreter(lua_State* state)
+{
+	// parameters
+	void* codeptr = luaL_checkudata(state, 2, "_sushi_buffer");
+	if(codeptr == NULL) {
+		lua_pushnil(state);
+		return 1;
+	}
+	long codesize = 0;
+	memcpy(&codesize, codeptr, sizeof(long));
+	codeptr += sizeof(long);
+	// create new lua state
+	lua_State* nstate = sushi_create_new_state();
+	if(nstate == NULL) {
+		lua_pushnil(state);
+		return 1;
+	}
+	// load code
+	SushiCode* code = sushi_code_for_buffer((unsigned char*)codeptr, (unsigned long)codesize, "__code__");
+	if(code == NULL) {
+		lua_close(nstate);
+		lua_pushnil(state);
+		return 1;
+	}
+	int lcr = sushi_load_code(nstate, code);
+	code->data = NULL;
+	code->fileName = NULL;
+	code = sushi_code_free(code);
+	if(lcr != 0) {
+		lua_close(nstate);
+		lua_pushnil(state);
+		return 1;
+	}
+	if(sushi_pcall(nstate, 0, 0) != LUA_OK) {
+		const char* errstr = sushi_error_to_string(nstate);
+		if(errstr != NULL) {
+			sushi_error("Code execution failed: `%s'", errstr);
+		}
+		else {
+			sushi_error("Code execution failed.");
+		}
+		lua_close(nstate);
+		lua_pushnil(state);
+		return 1;
+	}
+	void* ptr = lua_newuserdata(state, sizeof(lua_State*));
+	luaL_getmetatable(state, "_sushi_interpreter");
+	lua_setmetatable(state, -2);
+	memcpy(ptr, &nstate, sizeof(lua_State*));
+	return 1;
+}
+
+int close_interpreter_gc(lua_State* state)
+{
+	void* ptr = luaL_checkudata(state, 1, "_sushi_interpreter");
+	if(ptr == NULL) {
+		return 0;
+	}
+	lua_State* nstate = NULL;
+	memcpy(&nstate, ptr, sizeof(lua_State*));
+	if(nstate != NULL) {
+		lua_close(nstate);
+		nstate = NULL;
+		memcpy(ptr, &nstate, sizeof(lua_State*));
+	}
+	return 0;
+}
+
+int close_interpreter(lua_State* state)
+{
+	lua_remove(state, 1);
+	return close_interpreter_gc(state);
+}
+
+static void init_interpreter_type(lua_State* state)
+{
+	luaL_newmetatable(state, "_sushi_interpreter");
+	lua_pushliteral(state, "__gc");
+	lua_pushcfunction(state, close_interpreter_gc);
+	lua_rawset(state, -3);
+	lua_pop(state, 1);
+}
+
 static const luaL_Reg funcs[] = {
 	{ "get_sushi_version", get_sushi_version },
 	{ "get_sushi_executable_path", get_sushi_executable_path },
@@ -734,6 +782,8 @@ static const luaL_Reg funcs[] = {
 	{ "parse_to_function", parse_to_function },
 	{ "serialize_object", serialize_object },
 	{ "unserialize_object", unserialize_object },
+	{ "prepare_interpreter", prepare_interpreter },
+	{ "close_interpreter", close_interpreter },
 	{ NULL, NULL }
 };
 
@@ -741,4 +791,5 @@ void lib_vm_init(lua_State* state)
 {
 	luaL_newlib(state, funcs);
 	lua_setglobal(state, "_vm");
+	init_interpreter_type(state);
 }

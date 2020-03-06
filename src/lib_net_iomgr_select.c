@@ -90,12 +90,18 @@ int register_io_listener(lua_State* state)
 		lua_pushnumber(state, 0);
 		return 1;
 	}
+	if(fd > 1023) {
+		sushi_error("register_io_listener: tried to register fd %d > 1023", fd);
+		lua_pushnumber(state, 0);
+		return 1;
+	}
 	if(mode < 0 || mode > 2) {
 		lua_pushnumber(state, 0);
 		return 1;
 	}
 	int index = find_free_entry_index(iomgr);
 	if(index < 0) {
+		sushi_error("register_io_listener: failed to find free entry index");
 		lua_pushnumber(state, 0);
 		return 1;
 	}
@@ -235,6 +241,7 @@ int execute_io_manager(lua_State* state)
 			lua_pushnumber(state, 0);
 		}
 		else {
+			sushi_error("select: %s", strerror(errno));
 			lua_pushnumber(state, -1);
 		}
 		return 1;

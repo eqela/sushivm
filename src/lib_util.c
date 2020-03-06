@@ -904,7 +904,7 @@ static int sushi_inflate(lua_State* state)
 	return 1;
 }
 
-static void initBufferType(lua_State* state)
+static void init_buffer_type(lua_State* state)
 {
 	static const luaL_Reg bufferMethods[] = {
 		{ "__newindex", set_buffer_byte_lua_syntax },
@@ -966,5 +966,5 @@ void lib_util_init(lua_State* state)
 {
 	luaL_newlib(state, funcs);
 	lua_setglobal(state, "_util");
-	initBufferType(state);
+	init_buffer_type(state);
 }
