@@ -302,7 +302,13 @@ static int accept_tcp_socket(lua_State* state)
 	}
 	int r = accept(fd, NULL, NULL);
 	lua_pushnumber(state, r);
-	return 1;
+	if(r < 0 && errno != EAGAIN) {
+		lua_pushstring(state, strerror(errno));
+	}
+	else {
+		lua_pushnil(state);
+	}
+	return 2;
 }
 
 static int close_tcp_socket(lua_State* state)

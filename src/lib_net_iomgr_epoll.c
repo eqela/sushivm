@@ -47,10 +47,9 @@ int create_io_manager(lua_State* state)
 
 int register_io_listener(lua_State* state)
 {
-	lua_remove(state, 1);
-	int epollfd = luaL_checknumber(state, 1);
-	int fd = luaL_checknumber(state, 2);
-	int mode = luaL_checknumber(state, 3);
+	int epollfd = luaL_checknumber(state, 2);
+	int fd = luaL_checknumber(state, 3);
+	int mode = luaL_checknumber(state, 4);
 	if(epollfd < 0 || fd < 0) {
 		lua_pushnumber(state, 0);
 		return 1;
@@ -125,10 +124,9 @@ int update_io_listener(lua_State* state)
 int remove_io_listener(lua_State* state)
 {
 	int v = 1;
-	lua_remove(state, 1);
-	int epollfd = luaL_checknumber(state, 1);
-	int fd = luaL_checknumber(state, 2);
-	int objref = luaL_checknumber(state, 3);
+	int epollfd = luaL_checknumber(state, 2);
+	int fd = luaL_checknumber(state, 3);
+	int objref = luaL_checknumber(state, 4);
 	if(objref > 0) {
 		luaL_unref(state, LUA_REGISTRYINDEX, objref);
 	}
@@ -194,6 +192,12 @@ int execute_io_manager(lua_State* state)
 		}
 		else if(event->events & EPOLLOUT) {
 			_callLuaMethodWithObjref(state, objref, "onWriteReady");
+		}
+		else if(event->events & EPOLLHUP) {
+			_callLuaMethodWithObjref(state, objref, "onReadReady");
+		}
+		else {
+			sushi_error("unsupported epoll event 0x%x", r, event->events);
 		}
 	}
 	lua_pushnumber(state, r);
