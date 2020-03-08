@@ -133,7 +133,7 @@ int remove_io_listener(lua_State* state)
 	if(epollfd >= 0 && fd >= 0) {
 		struct epoll_event event;
 		memset(&event, 0, sizeof(struct epoll_event));
-		if(epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, &event) != 0) {
+		if(epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, &event) == 0) {
 			v = 0;
 		}
 	}
