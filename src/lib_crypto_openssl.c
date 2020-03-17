@@ -183,7 +183,7 @@ int ssl_close(lua_State* state)
 	return ssl_close_gc(state);
 }
 
-RSA *createRSA(unsigned char *key, int forPublic)
+RSA *create_rsa(unsigned char *key, int forPublic)
 {
 	RSA *rsa = NULL;
 	BIO *bio = BIO_new_mem_buf(key, -1);
@@ -197,12 +197,14 @@ RSA *createRSA(unsigned char *key, int forPublic)
 		rsa = PEM_read_bio_RSAPrivateKey(bio, &rsa, NULL, NULL);
 	}
 	if(rsa == NULL) {
+		BIO_free(bio);
 		return 0;
 	}
+	BIO_free(bio);
 	return rsa;
 }
 
-void printError(char *msg)
+void print_crypto_error(char *msg)
 {
 	char *err = malloc(130);;
 	ERR_load_crypto_strings();
@@ -227,7 +229,7 @@ int rs256_sign(lua_State* state)
 	}
 	unsigned char *datapointer = (unsigned char*)dataptr+sizeof(long);
 	unsigned char *privatekeypointer = (unsigned char*)privatekeyptr+sizeof(long);
-	RSA *privatersa = createRSA(privatekeypointer, 0);
+	RSA *privatersa = create_rsa(privatekeypointer, 0);
 	if(privatersa == NULL) {
 		lua_pushnil(state);
 		return 1;
@@ -236,7 +238,9 @@ int rs256_sign(lua_State* state)
 	unsigned char *signature = malloc(RSA_size(privatersa));
 	int sign = RSA_sign(NID_sha256, datapointer, (int)size, signature, &signatureLength, privatersa);
 	if(sign != 1) {
-		printError("Failed to sign data");
+		print_crypto_error("Failed to sign data");
+		RSA_free(privatersa);
+		free(signature);
 		lua_pushnil(state);
 		return 1;
 	}
@@ -247,6 +251,8 @@ int rs256_sign(lua_State* state)
 	size_t longsz = sizeof(long);
 	memcpy(ptr, &sz, longsz);
 	memcpy(ptr+longsz, signature, (size_t)signatureLength);
+	RSA_free(privatersa);
+	free(signature);
 	return 1;
 }
 
@@ -274,18 +280,19 @@ int rs256_verify(lua_State* state)
 	unsigned char *datapointer = (unsigned char*)dataptr+sizeof(long);
 	unsigned char *signaturepointer = (unsigned char*)sigptr+sizeof(long);
 	unsigned char *publickeypointer = (unsigned char*)keyptr+sizeof(long);
-	RSA *publicrsa = createRSA(publickeypointer, 1);
+	RSA *publicrsa = create_rsa(publickeypointer, 1);
 	if(publicrsa == NULL) {
 		lua_pushnil(state);
 		return 1;
 	}
 	int verify = RSA_verify(NID_sha256, datapointer, (unsigned int)datasz, signaturepointer, (unsigned int)sigsz, publicrsa);
 	if(verify != 1) {
-		printError("Failed to verify signature");
+		print_crypto_error("Failed to verify signature");
 		lua_pushnumber(state, 0);
 	}
 	else {
 		lua_pushnumber(state, 1);
 	}
+	RSA_free(publicrsa);
 	return 1;
 }
