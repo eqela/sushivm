@@ -25,6 +25,9 @@
 #include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <openssl/bio.h>
 #include "sushi.h"
 
 static int ssl_initialized = 0;
@@ -178,4 +181,111 @@ int ssl_close(lua_State* state)
 {
 	lua_remove(state, 1);
 	return ssl_close_gc(state);
+}
+
+RSA *createRSA(unsigned char *key, int forPublic)
+{
+	RSA *rsa = NULL;
+	BIO *bio = BIO_new_mem_buf(key, -1);
+	if(bio == NULL) {
+		return 0;
+	}
+	if(forPublic == 1) {
+		rsa = PEM_read_bio_RSA_PUBKEY(bio, &rsa, NULL, NULL);
+	}
+	else {
+		rsa = PEM_read_bio_RSAPrivateKey(bio, &rsa, NULL, NULL);
+	}
+	if(rsa == NULL) {
+		return 0;
+	}
+	return rsa;
+}
+
+void printError(char *msg)
+{
+	char * err = malloc(130);;
+	ERR_load_crypto_strings();
+	ERR_error_string(ERR_get_error(), err);
+	printf("%s : %s\n", msg, err);
+	free(err);
+}
+
+int rs256_sign(lua_State* state)
+{
+	void* dataptr = luaL_checkudata(state, 2, "_sushi_buffer");
+	if(dataptr == NULL) {
+		lua_pushnil(state);
+		return 1;
+	}
+	long size = 0;
+	memcpy(&size, dataptr, sizeof(long));
+	void* privatekeyptr = luaL_checkudata(state, 3, "_sushi_buffer");
+	if(privatekeyptr == NULL) {
+		lua_pushnil(state);
+		return 1;
+	}
+	unsigned char *datapointer = (unsigned char*)dataptr+sizeof(long);
+	unsigned char *privatekeypointer = (unsigned char*)privatekeyptr+sizeof(long);
+	RSA *privatersa = createRSA(privatekeypointer, 0);
+	if(privatersa == NULL) {
+		lua_pushnil(state);
+		return 1;
+	}
+	unsigned int signatureLength = 0;
+	unsigned char *signature = malloc(RSA_size(privatersa));
+	int sign = RSA_sign(NID_sha256, datapointer, (int)size, signature, &signatureLength, privatersa);
+	if(sign != 1) {
+		printError("Failed to sign data");
+		lua_pushnil(state);
+		return 1;
+	}
+	void* ptr = lua_newuserdata(state, (size_t)signatureLength);
+	luaL_getmetatable(state, "_sushi_buffer");
+	lua_setmetatable(state, -2);
+	long sz = (long)signatureLength;
+	size_t longsz = sizeof(long);
+	memcpy(ptr, &sz, longsz);
+	memcpy(ptr+longsz, signature, (size_t)signatureLength);
+	return 1;
+}
+
+int rs256_verify(lua_State* state)
+{
+	void* dataptr = luaL_checkudata(state, 2, "_sushi_buffer");
+	if(dataptr == NULL) {
+		lua_pushnil(state);
+		return 1;
+	}
+	long datasz = 0;
+	memcpy(&datasz, dataptr, sizeof(long));
+	void* sigptr = luaL_checkudata(state, 3, "_sushi_buffer");
+	if(sigptr == NULL) {
+		lua_pushnil(state);
+		return 1;
+	}
+	long sigsz = 0;
+	memcpy(&sigsz, sigptr, sizeof(long));
+	void* keyptr = luaL_checkudata(state, 4, "_sushi_buffer");
+	if(keyptr == NULL) {
+		lua_pushnil(state);
+		return 1;
+	}
+	unsigned char *datapointer = (unsigned char*)dataptr+sizeof(long);
+	unsigned char *signaturepointer = (unsigned char*)sigptr+sizeof(long);
+	unsigned char *publickeypointer = (unsigned char*)keyptr+sizeof(long);
+	RSA *publicrsa = createRSA(publickeypointer, 1);
+	if(publicrsa == NULL) {
+		lua_pushnil(state);
+		return 1;
+	}
+	int verify = RSA_verify(NID_sha256, datapointer, (unsigned int)datasz, signaturepointer, (unsigned int)sigsz, publicrsa);
+	if(verify != 1) {
+		printError("Failed to verify signature");
+		lua_pushnumber(state, 0);
+	}
+	else {
+		lua_pushnumber(state, 1);
+	}
+	return 1;
 }
