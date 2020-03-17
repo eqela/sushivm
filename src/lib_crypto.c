@@ -29,12 +29,16 @@ int ssl_read(lua_State* state);
 int ssl_write(lua_State* state);
 int ssl_close_gc(lua_State* state);
 int ssl_close(lua_State* state);
+int rs256_sign(lua_State* state);
+int rs256_verify(lua_State* state);
 
 static const luaL_Reg funcs[] = {
 	{ "ssl_connect", ssl_connect },
 	{ "ssl_read", ssl_read },
 	{ "ssl_write", ssl_write },
 	{ "ssl_close", ssl_close },
+	{ "rs256_sign", rs256_sign },
+	{ "rs256_verify", rs256_verify },
 	{ NULL, NULL }
 };
 
