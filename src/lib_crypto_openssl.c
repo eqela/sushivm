@@ -212,8 +212,7 @@ int rs256_sign(lua_State* state)
 	}
 	long size = 0;
 	memcpy(&size, dataptr, sizeof(long));
-	size_t strsize;
-	unsigned char *privatekeystr = luaL_checklstring(state, 3, &strsize);
+	unsigned char *privatekeystr = luaL_checkstring(state, 3);
 	if(privatekeystr == NULL) {
 		lua_pushnil(state);
 		return 1;
@@ -234,11 +233,11 @@ int rs256_sign(lua_State* state)
 		lua_pushnil(state);
 		return 1;
 	}
-	void* ptr = lua_newuserdata(state, (size_t)signatureLength);
+	size_t longsz = sizeof(long);
+	void* ptr = lua_newuserdata(state, (size_t)signatureLength+longsz);
 	luaL_getmetatable(state, "_sushi_buffer");
 	lua_setmetatable(state, -2);
 	long sz = (long)signatureLength;
-	size_t longsz = sizeof(long);
 	memcpy(ptr, &sz, longsz);
 	memcpy(ptr+longsz, signature, (size_t)signatureLength);
 	RSA_free(privatersa);
@@ -250,39 +249,43 @@ int rs256_verify(lua_State* state)
 {
 	void* dataptr = luaL_checkudata(state, 2, "_sushi_buffer");
 	if(dataptr == NULL) {
-		lua_pushnil(state);
-		return 1;
+		lua_pushnumber(state, 0);
+		lua_pushstring(state, "null data");
+		return 2;
 	}
 	long datasz = 0;
 	memcpy(&datasz, dataptr, sizeof(long));
 	void* sigptr = luaL_checkudata(state, 3, "_sushi_buffer");
 	if(sigptr == NULL) {
-		lua_pushnil(state);
-		return 1;
+		lua_pushnumber(state, 0);
+		lua_pushstring(state, "null signature");
+		return 2;
 	}
 	long sigsz = 0;
 	memcpy(&sigsz, sigptr, sizeof(long));
-	size_t keysize;
-	unsigned char *keyptr = luaL_checklstring(state, 4, &keysize);
+	unsigned char *keyptr = luaL_checkstring(state, 4);
 	if(keyptr == NULL) {
-		lua_pushnil(state);
-		return 1;
+		lua_pushnumber(state, 0);
+		lua_pushstring(state, "null public key");
+		return 2;
 	}
 	unsigned char *datapointer = (unsigned char*)dataptr+sizeof(long);
 	unsigned char *signaturepointer = (unsigned char*)sigptr+sizeof(long);
 	RSA *publicrsa = create_rsa(keyptr, 1);
 	if(publicrsa == NULL) {
-		lua_pushnil(state);
-		return 1;
+		lua_pushnumber(state, 0);
+		lua_pushstring(state, "failed to create RSA");
+		return 2;
 	}
 	int verify = RSA_verify(NID_sha256, datapointer, (unsigned int)datasz, signaturepointer, (unsigned int)sigsz, publicrsa);
 	if(verify != 1) {
-		sushi_error("Failed to verify signature: `%s'", ERR_reason_error_string(ERR_get_error()));
 		lua_pushnumber(state, 0);
+		lua_pushstring(state, ERR_reason_error_string(ERR_get_error()));
 	}
 	else {
 		lua_pushnumber(state, 1);
+		lua_pushnil(state);
 	}
 	RSA_free(publicrsa);
-	return 1;
+	return 2;
 }
