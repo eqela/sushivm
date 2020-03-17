@@ -204,10 +204,10 @@ RSA *createRSA(unsigned char *key, int forPublic)
 
 void printError(char *msg)
 {
-	char * err = malloc(130);;
+	char *err = malloc(130);;
 	ERR_load_crypto_strings();
 	ERR_error_string(ERR_get_error(), err);
-	printf("%s : %s\n", msg, err);
+	sushi_error("`%s': `%s'", msg, err);
 	free(err);
 }
 
