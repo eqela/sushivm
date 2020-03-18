@@ -51,3 +51,13 @@ int ssl_close(lua_State* state)
 {
 	return 0;
 }
+
+int rs256_sign(lua_State* state)
+{
+	return 0;
+}
+
+int rs256_verify(lua_State* state)
+{
+	return 0;
+}
