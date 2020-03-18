@@ -220,6 +220,11 @@ int rs256_sign(lua_State* state)
 		return 2;
 	}
 	unsigned char *datapointer = (unsigned char*)dataptr+sizeof(long);
+	unsigned char *databuff[SHA256_DIGEST_LENGTH];
+	SHA256_CTX ctx;
+	SHA256_Init(&ctx);
+	SHA256_Update(&ctx, datapointer, size);
+	SHA256_Final(databuff, &ctx);
 	RSA *privatersa = create_rsa(privatekeystr, 0);
 	if(privatersa == NULL) {
 		lua_pushnil(state);
@@ -228,7 +233,7 @@ int rs256_sign(lua_State* state)
 	}
 	unsigned int signatureLength = 0;
 	unsigned char *signature = malloc(RSA_size(privatersa));
-	int sign = RSA_sign(NID_sha256, datapointer, (int)size, signature, &signatureLength, privatersa);
+	int sign = RSA_sign(NID_sha256, databuff, SHA256_DIGEST_LENGTH, signature, &signatureLength, privatersa);
 	if(sign != 1) {
 		RSA_free(privatersa);
 		free(signature);
@@ -274,6 +279,11 @@ int rs256_verify(lua_State* state)
 		return 2;
 	}
 	unsigned char *datapointer = (unsigned char*)dataptr+sizeof(long);
+	unsigned char *databuff[SHA256_DIGEST_LENGTH];
+	SHA256_CTX ctx;
+	SHA256_Init(&ctx);
+	SHA256_Update(&ctx, datapointer, datasz);
+	SHA256_Final(databuff, &ctx);
 	unsigned char *signaturepointer = (unsigned char*)sigptr+sizeof(long);
 	RSA *publicrsa = create_rsa(keyptr, 1);
 	if(publicrsa == NULL) {
@@ -281,7 +291,7 @@ int rs256_verify(lua_State* state)
 		lua_pushstring(state, "failed to create RSA");
 		return 2;
 	}
-	int verify = RSA_verify(NID_sha256, datapointer, (unsigned int)datasz, signaturepointer, (unsigned int)sigsz, publicrsa);
+	int verify = RSA_verify(NID_sha256, databuff, SHA256_DIGEST_LENGTH, signaturepointer, (unsigned int)sigsz, publicrsa);
 	if(verify != 1) {
 		lua_pushnumber(state, 0);
 		lua_pushstring(state, ERR_reason_error_string(ERR_get_error()));
