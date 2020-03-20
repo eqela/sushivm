@@ -95,6 +95,7 @@ test:
 	fi
 
 release: sushi
+	$(STRIP_SYSDEP) sushi$(EXESUFFIX)
 	rm -rf release
 	mkdir -p release
 	zip -j release/sushi_$(VERSION)_$(PLATFORMNAME).zip sushi$(EXESUFFIX) ../LICENSE ../README.md
