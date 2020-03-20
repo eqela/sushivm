@@ -94,7 +94,13 @@ test:
 		echo "Skipping tests when cross-compiling."; \
 	fi
 
+release: sushi
+	rm -rf release
+	mkdir -p release
+	zip -j release/sushi_$(VERSION)_$(PLATFORMNAME).zip sushi$(EXESUFFIX) ../LICENSE ../README.md
+
 clean:
 	make -C luajit/src clean
+	rm -rf release
 	rm -rf openssl/build
 	rm -f $(OBJS) sushi sushi.exe

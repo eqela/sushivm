@@ -33,3 +33,4 @@ OBJS_SYSDEP=\
 	lib_os_posix.o \
 	lib_crypto_openssl.o
 EXESUFFIX=
+PLATFORMNAME=macos

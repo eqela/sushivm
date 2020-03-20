@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release-windows:
+    name: Windows Release
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - run: sudo apt install gcc-mingw-w64-x86-64
+    - run: make VERSION="${GITHUB_REF#refs/tags/}" CROSSTARGET="win32" -C src release
+    - uses: actions/upload-artifact@v1
+      with:
+        name: release-windows
+        path: src/release
+  release-linux:
+    name: Linux Release
+    runs-on: ubuntu-18.04
+    container: alpine:3.11.3
+    steps:
+    - uses: actions/checkout@v1
+    - run: apk add --update alpine-sdk zip
+    - run: make VERSION="${GITHUB_REF#refs/tags/}" STATIC_BUILD="yes" -C src release
+    - uses: actions/upload-artifact@v1
+      with:
+        name: release-linux
+        path: src/release
+  release-macos:
+    name: MacOS Release
+    runs-on: macOS-10.15
+    steps:
+    - uses: actions/checkout@v1
+    - run: make VERSION="${GITHUB_REF#refs/tags/}" -C src release
+    - uses: actions/upload-artifact@v1
+      with:
+        name: release-macos
+        path: src/release
+  create-release:
+    name: GitHub release
+    runs-on: ubuntu-18.04
+    needs: [ release-macos, release-windows, release-linux ]
+    steps:
+    - uses: actions/download-artifact@v1
+      with:
+        name: release-windows
+    - uses: actions/download-artifact@v1
+      with:
+        name: release-linux
+    - uses: actions/download-artifact@v1
+      with:
+        name: release-macos
+    - run: |
+        VERSION="${GITHUB_REF#refs/tags/}"
+        RELEASE_ID="$(curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases/tags/$VERSION" | jq .id)"
+        for file in release-*/*
+        do
+          bn="$(basename "$file")"
+          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=${bn}&label=${bn}" \
+              --data-binary "@$file"
+        done
