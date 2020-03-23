@@ -444,7 +444,7 @@ static int network_bytes_to_host64(lua_State* state)
 	bytes[6] = ((int)luaL_checknumber(state, 7)) & 0xff;
 	bytes[7] = ((int)luaL_checknumber(state, 8)) & 0xff;
 	uint64_t* vp = (uint64_t*)bytes;
-	lua_pushnumber(state, le64toh(*vp) & 0xffffffffffffffff);
+	lua_pushnumber(state, be64toh(*vp) & 0xffffffffffffffff);
 	return 1;
 }
 
