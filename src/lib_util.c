@@ -431,6 +431,22 @@ static int network_bytes_to_host32(lua_State* state)
 	return 1;
 }
 
+static int network_bytes_to_host64(lua_State* state)
+{
+	uint8_t bytes[8];
+	lua_remove(state, 1);
+	bytes[0] = ((int)luaL_checknumber(state, 1)) & 0xff;
+	bytes[1] = ((int)luaL_checknumber(state, 2)) & 0xff;
+	bytes[2] = ((int)luaL_checknumber(state, 3)) & 0xff;
+	bytes[3] = ((int)luaL_checknumber(state, 4)) & 0xff;
+	bytes[4] = ((int)luaL_checknumber(state, 5)) & 0xff;
+	bytes[5] = ((int)luaL_checknumber(state, 6)) & 0xff;
+	bytes[6] = ((int)luaL_checknumber(state, 7)) & 0xff;
+	uint64_t* vp = (uint64_t*)bytes;
+	lua_pushnumber(state, htole64(*vp) & 0xffffffffffffffff);
+	return 1;
+}
+
 static int convert_to_integer(lua_State* state)
 {
 	int n = luaL_checknumber(state, 2);
@@ -937,6 +953,7 @@ static const luaL_Reg funcs[] = {
 	{ "double_to_buffer64", double_to_buffer64 },
 	{ "network_bytes_to_host16", network_bytes_to_host16 },
 	{ "network_bytes_to_host32", network_bytes_to_host32 },
+	{ "network_bytes_to_host64", network_bytes_to_host64 },
 	{ "convert_to_integer", convert_to_integer },
 	{ "to_number", to_number },
 	{ "get_string_length", get_string_length },
