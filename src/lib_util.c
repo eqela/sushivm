@@ -32,9 +32,8 @@
 #include <stdint.h>
 #include "lib_util.h"
 #include "zbuf.h"
-#ifdef SUSHI_SUPPORT_LINUX
-#define _BSD_SOURCE
 #include <endian.h>
+#ifdef SUSHI_SUPPORT_LINUX
 #include <arpa/inet.h>
 #endif
 #define TWO_BYTES_SEQ_START 0xC2
