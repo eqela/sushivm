@@ -36,6 +36,9 @@
 #ifdef SUSHI_SUPPORT_LINUX
 #include <arpa/inet.h>
 #endif
+#ifdef SUSHI_SUPPORT_MACOS
+#include <machine/endian.h>
+#endif
 #define TWO_BYTES_SEQ_START 0xC2
 #define TWO_BYTES_SEQ_END 0xDF
 #define THREE_BYTES_SEQ_START 0xE0
