@@ -37,7 +37,7 @@
 #include <endian.h>
 #endif
 #ifdef SUSHI_SUPPORT_MACOS
-#include <machine/endian.h>
+#include <libkern/OSByteOrder.h>
 #endif
 #define TWO_BYTES_SEQ_START 0xC2
 #define TWO_BYTES_SEQ_END 0xDF
@@ -448,7 +448,12 @@ static int network_bytes_to_host64(lua_State* state)
 	bytes[6] = ((int)luaL_checknumber(state, 7)) & 0xff;
 	bytes[7] = ((int)luaL_checknumber(state, 8)) & 0xff;
 	uint64_t* vp = (uint64_t*)bytes;
+	#ifdef SUSHI_SUPPORT_LINUX
 	lua_pushnumber(state, be64toh(*vp) & 0xffffffffffffffff);
+	#endif
+	#ifdef SUSHI_SUPPORT_MACOS
+	lua_pushnumber(state, OSSwapBigToHostInt64(*vp) & 0xffffffffffffffff);
+	#endif
 	return 1;
 }
 
