@@ -32,9 +32,9 @@
 #include <stdint.h>
 #include "lib_util.h"
 #include "zbuf.h"
-#include <endian.h>
 #ifdef SUSHI_SUPPORT_LINUX
 #include <arpa/inet.h>
+#include <endian.h>
 #endif
 #ifdef SUSHI_SUPPORT_MACOS
 #include <machine/endian.h>
