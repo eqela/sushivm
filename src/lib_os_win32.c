@@ -154,6 +154,18 @@ int send_process_signal(lua_State* state)
 	return 0;
 }
 
+int check_signal_state(lua_State* state)
+{
+	// FIXME
+	return 0;
+}
+
+int trap_signal(lua_State* state)
+{
+	// FIXME
+	return 0;
+}
+
 int disown_process(lua_State* state)
 {
 	// FIXME
