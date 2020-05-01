@@ -26,6 +26,8 @@ CC_SYSDEP=gcc
 STRIP_SYSDEP=strip
 HOST_CC_SYSDEP=gcc
 LUAJIT_TARGET_SYS=Linux
+BCRYPT_TARGET_SYS=Linux
+BCRYPT_A_FILES=libbcrypt/bcrypt.a
 CFLAGS_SYSDEP= \
 	-DSUSHI_SUPPORT_LINUX
 LIBS_SYSDEP=-lm -ldl -lpthread
@@ -39,6 +41,8 @@ endif
 OBJS_SYSDEP=\
 	lib_net_iomgr_epoll.o \
 	lib_os_posix.o \
-	lib_crypto_openssl.o
+	lib_crypto_openssl.o \
+	libbcrypt/bcrypt.o \
+	lib_bcrypt_posix.o
 EXESUFFIX=
 PLATFORMNAME=linux

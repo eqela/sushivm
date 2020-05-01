@@ -66,6 +66,14 @@ LIBS=$(LIBS_SYSDEP)
 
 all: sushi test
 
+ifeq (Windows,$(BCRYPT_TARGET_SYS))
+libcrypt:
+	echo Not building libbcrypt
+else
+libcrypt:
+	make -C libbcrypt/ all
+endif
+
 ifeq (Darwin,$(LUAJIT_TARGET_SYS))
 libssl:
 	if [ ! -f openssl/build/libssl.a ]; then \
@@ -84,8 +92,8 @@ libluajit:
 	make CC="$(CC)" HOST_CC="$(HOST_CC_SYSDEP)" TARGET_SYS="$(LUAJIT_TARGET_SYS)" Q= -C luajit/src libluajit.a
 endif
 
-sushi: libluajit libssl $(OBJS)
-	$(CC) -o sushi$(EXESUFFIX) $(OBJS) luajit/src/libluajit.a $(LDFLAGS) $(LIBS)
+sushi: libcrypt libluajit libssl $(OBJS)
+	$(CC) -o sushi$(EXESUFFIX) $(OBJS) luajit/src/libluajit.a $(BCRYPT_A_FILES) $(LDFLAGS) $(LIBS)
 
 test:
 	@if [ "$(CROSSTARGET)" = "" ]; then \
@@ -102,6 +110,7 @@ release: sushi
 
 clean:
 	make -C luajit/src clean
+	make -C libbcrypt/ clean
 	rm -rf release
 	rm -rf openssl/build
 	rm -f $(OBJS) sushi sushi.exe

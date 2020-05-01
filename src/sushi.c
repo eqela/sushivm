@@ -40,6 +40,7 @@
 #include <winsock.h>
 #endif
 #include "sushi.h"
+#include "lib_bcrypt.h"
 #include "lib_crypto.h"
 #include "lib_io.h"
 #include "lib_net.h"
@@ -178,6 +179,7 @@ int sushi_has_errors()
 
 static void init_libraries(lua_State* state)
 {
+	lib_bcrypt_init(state);
 	lib_crypto_init(state);
 	lib_io_init(state);
 	lib_net_init(state);

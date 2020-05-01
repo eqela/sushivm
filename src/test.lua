@@ -62,7 +62,25 @@ function test_zlib()
 	return true
 end
 
+function test_bcrypt()
+	local factor = 12
+	local original = "test string asdfjaslkdf @#$@#$ @#$@# $ aslkjfasdd #@$!_(^&%($ asdfasdfdasfasd"
+	local salt = _bcrypt:generate_salt(factor)
+	local hash = _bcrypt:hash_password(original, salt)
+	local isequal = _bcrypt:check_password(original, hash)
+	if isequal > 0 then
+		error("is not equals")
+	end
+	info("is equals")
+	local isnotequal = _bcrypt:check_password(original, original)
+	if isnotequal > 0 then
+		error("is not equals")
+	end
+	return true
+end
+
 execute("test_global", test_global)
 execute("test_zlib", test_zlib)
+execute("test_bcrypt", test_bcrypt)
 
 return rv
