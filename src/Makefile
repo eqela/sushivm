@@ -95,7 +95,7 @@ libluajit:
 endif
 
 sushi: libluajit libssl libcrypt $(OBJS)
-	$(CC) -o sushi$(EXESUFFIX) $(OBJS) luajit/src/libluajit.a libbcrypt/bcrypt.a $(LDFLAGS) $(LIBS)
+	$(CC) -o sushi$(EXESUFFIX) $(OBJS) luajit/src/libluajit.a $(BCRYPTAFILES) $(LDFLAGS) $(LIBS)
 
 test:
 	@if [ "$(CROSSTARGET)" = "" ]; then \
