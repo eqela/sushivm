@@ -64,18 +64,13 @@ end
 
 function test_bcrypt()
 	local factor = 12
-	local original = "test string asdfjaslkdf @#$@#$ @#$@# $ aslkjfasdd #@$!_(^&%($ asdfasdfdasfasd"
+	local original = "florentinoortegaIII"
 	local salt = _bcrypt:generate_salt(factor)
 	local hash = _bcrypt:hash_password(original, salt)
-	local isequal = _bcrypt:check_password(original, hash)
-	if isequal > 0 then
-		error("is not equals")
-	end
-	info("is equals")
-	local isnotequal = _bcrypt:check_password(original, original)
-	if isnotequal > 0 then
-		error("is not equals")
-	end
+	local validation = _bcrypt:check_password(original, hash)
+	info("generated salt: " .. salt)
+	info("hashed password: " .. hash)
+	info("password validation: " .. validation)
 	return true
 end
 

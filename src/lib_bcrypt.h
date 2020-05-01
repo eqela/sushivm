@@ -24,6 +24,7 @@
 
 #ifndef LIB_BCRYPT_H
 #define LIB_BCRYPT_H
+#define BCRYPT_HASHSIZE	(64)
 
 #include "sushi.h"
 

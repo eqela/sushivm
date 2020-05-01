@@ -64,6 +64,7 @@ ifeq ($(STATIC_BUILD),yes)
 	LDFLAGS += -static
 endif
 LIBS=$(LIBS_SYSDEP)
+BCRYPTAFILES=$(BCRYPT_A_FILES)
 
 all: sushi test
 
@@ -93,8 +94,8 @@ libluajit:
 	make CC="$(CC)" HOST_CC="$(HOST_CC_SYSDEP)" TARGET_SYS="$(LUAJIT_TARGET_SYS)" Q= -C luajit/src libluajit.a
 endif
 
-sushi: libcrypt libluajit libssl $(OBJS)
-	$(CC) -o sushi$(EXESUFFIX) $(OBJS) luajit/src/libluajit.a $(BCRYPT_A_FILES) $(LDFLAGS) $(LIBS)
+sushi: libluajit libssl libcrypt $(OBJS)
+	$(CC) -o sushi$(EXESUFFIX) $(OBJS) luajit/src/libluajit.a libbcrypt/bcrypt.a $(LDFLAGS) $(LIBS)
 
 test:
 	@if [ "$(CROSSTARGET)" = "" ]; then \
