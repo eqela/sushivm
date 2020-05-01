@@ -23,7 +23,6 @@
  */
 
 #include "lib_bcrypt.h"
-#define BCRYPT_HASHSIZE	(64)
 
 int generate_salt(lua_State* state);
 int hash_password(lua_State* state);

@@ -55,15 +55,3 @@ int check_password(lua_State* state)
 	lua_pushnumber(state, 1);
 	return 1;
 }
-
-static const luaL_Reg funcs[] = {
-	{ "generate_salt", generate_salt },
-	{ "hash_password", hash_password },
-	{ "check_password", check_password }
-};
-
-void lib_bcrypt_init(lua_State* state)
-{
-	luaL_newlib(state, funcs);
-	lua_setglobal(state, "_bcrypt");
-}

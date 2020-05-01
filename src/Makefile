@@ -45,6 +45,7 @@ OBJS=main.o \
 	sushi.o \
 	lmarshal.o \
 	zbuf.o \
+	lib_bcrypt.o \
 	lib_crypto.o \
 	lib_io.o \
 	lib_net.o \
