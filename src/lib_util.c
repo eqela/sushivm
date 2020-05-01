@@ -449,7 +449,30 @@ static int network_bytes_to_host64(lua_State* state)
 	bytes[7] = ((int)luaL_checknumber(state, 8)) & 0xff;
 	uint64_t* vp = (uint64_t*)bytes;
 #ifdef SUSHI_SUPPORT_WIN32
-	// Not implemented
+	long v = 0;
+	char* dp = (char*)&v;
+	char* sp = (char*)bytes;
+	if(is_system_little_endian() == 0) {
+		dp[0] = sp[0];
+		dp[1] = sp[1];
+		dp[2] = sp[2];
+		dp[3] = sp[3];
+		dp[4] = sp[4];
+		dp[5] = sp[5];
+		dp[6] = sp[6];
+		dp[7] = sp[7];
+	}
+	else {
+		dp[0] = sp[7];
+		dp[1] = sp[6];
+		dp[2] = sp[5];
+		dp[3] = sp[4];
+		dp[4] = sp[3];
+		dp[5] = sp[2];
+		dp[6] = sp[1];
+		dp[7] = sp[0];
+	}
+	lua_pushnumber(state, v);
 #endif
 #ifdef SUSHI_SUPPORT_LINUX
 	lua_pushnumber(state, be64toh(*vp) & 0xffffffffffffffff);

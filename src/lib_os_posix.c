@@ -33,6 +33,11 @@
 #include <pthread.h>
 #include "lib_os.h"
 
+#define SIGMAX 64
+
+static int signal_trapped[SIGMAX];
+static int signal_flags[SIGMAX];
+static int signal_handlers_initialized = 0;
 extern char **environ;
 
 int sleep_seconds(lua_State* state)
@@ -332,6 +337,66 @@ int send_process_signal(lua_State* state)
 	int signal = luaL_checknumber(state, 3);
 	kill(pid, signal);
 	return 0;
+}
+
+void _init_signals()
+{
+	if(signal_handlers_initialized == 0) {
+		int n;
+		for(n=0; n<SIGMAX; n++) {
+			signal_trapped[n] = 0;
+			signal_flags[n] = 0;
+		}
+		signal_handlers_initialized = 1;
+	}
+}
+
+void _signal_handler(int signum)
+{
+	if(signum >= 0 && signum < SIGMAX) {
+		signal_flags[signum] = 1;
+	}
+}
+
+int check_signal_state(lua_State* state)
+{
+	_init_signals();
+	int v = 0;
+	int signum = luaL_checknumber(state, 2);
+	if(signum >= 0 && signum < SIGMAX) {
+		v = signal_flags[signum];
+		if(v == 1) {
+			signal_flags[signum] = 0;
+		}
+	}
+	lua_pushnumber(state, v);
+	return 1;
+}
+
+int trap_signal(lua_State* state)
+{
+	_init_signals();
+	int v = 0;
+	int signum = luaL_checknumber(state, 2);
+	int enabled = luaL_checknumber(state, 3);
+	if(signum >= 0 && signum < SIGMAX) {
+		v = signal_trapped[signum];
+		if(enabled == 1) {
+			if(signal_trapped[signum] == 0) {
+				signal(signum, _signal_handler);
+				signal_trapped[signum] = 1;
+			}
+		}
+		else {
+			if(signal_trapped[signum] == 1) {
+				signal(signum, SIG_DFL);
+				signal_trapped[signum] = 0;
+				signal_flags[signum] = 0;
+			}
+		}
+	}
+	lua_pushnumber(state, v);
+	return 1;
 }
 
 int disown_process(lua_State* state)

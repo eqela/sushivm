@@ -41,6 +41,8 @@ int replace_process(lua_State* state);
 int wait_for_process(lua_State* state);
 int is_process_alive(lua_State* state);
 int send_process_signal(lua_State* state);
+int check_signal_state(lua_State* state);
+int trap_signal(lua_State* state);
 int disown_process(lua_State* state);
 int execute_in_thread(lua_State* state);
 
@@ -62,6 +64,8 @@ static const luaL_Reg funcs[] = {
 	{ "wait_for_process", wait_for_process },
 	{ "is_process_alive", is_process_alive },
 	{ "send_process_signal", send_process_signal },
+	{ "check_signal_state", check_signal_state },
+	{ "trap_signal", trap_signal },
 	{ "disown_process", disown_process },
 	{ "execute_in_thread", execute_in_thread },
 	{ NULL, NULL }
