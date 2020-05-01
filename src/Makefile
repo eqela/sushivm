@@ -56,6 +56,7 @@ OBJS=main.o \
 	lib_zip.o \
 	zlib/deflate.o zlib/inffast.o zlib/inflate.o zlib/inftrees.o zlib/zutil.o zlib/trees.o zlib/adler32.o zlib/crc32.o \
 	minizip/unzip.o minizip/zip.o minizip/ioapi.o \
+	libbcrypt/bcrypt.o \
 	$(OBJS_SYSDEP)
 CC=$(CC_SYSDEP)
 CFLAGS=-Iluajit/src -Izlib -Iminizip -DSUSHI_VERSION=\"$(VERSION)\" -DSUSHI_SUPPORT_ZLIB $(CFLAGS_SYSDEP)
@@ -68,13 +69,8 @@ BCRYPTAFILES=$(BCRYPT_A_FILES)
 
 all: sushi test
 
-ifeq (Windows,$(BCRYPT_TARGET_SYS))
-libcrypt:
-	echo Not building libbcrypt
-else
 libcrypt:
 	make -C libbcrypt/ all
-endif
 
 ifeq (Darwin,$(LUAJIT_TARGET_SYS))
 libssl:
@@ -95,7 +91,7 @@ libluajit:
 endif
 
 sushi: libluajit libssl libcrypt $(OBJS)
-	$(CC) -o sushi$(EXESUFFIX) $(OBJS) luajit/src/libluajit.a $(BCRYPTAFILES) $(LDFLAGS) $(LIBS)
+	$(CC) -o sushi$(EXESUFFIX) $(OBJS) luajit/src/libluajit.a libbcrypt/bcrypt.a $(LDFLAGS) $(LIBS)
 
 test:
 	@if [ "$(CROSSTARGET)" = "" ]; then \

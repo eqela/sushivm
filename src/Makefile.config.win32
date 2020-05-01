@@ -26,8 +26,6 @@ CC_SYSDEP=x86_64-w64-mingw32-gcc
 STRIP_SYSDEP=x86_64-w64-mingw32-strip
 HOST_CC_SYSDEP=gcc
 LUAJIT_TARGET_SYS=Windows
-BCRYPT_TARGET_SYS=Windows
-BCRYPT_A_FILES=
 CFLAGS_SYSDEP=-DSUSHI_SUPPORT_WIN32
 LDFLAGS_SYSDEP=
 LIBS_SYSDEP=-lm -lws2_32
@@ -35,6 +33,5 @@ EXESUFFIX=.exe
 OBJS_SYSDEP=\
 	lib_net_iomgr_dummy.o \
 	lib_os_win32.o \
-	lib_crypto_dummy.o \
-	lib_bcrypt_dummy.o
+	lib_crypto_dummy.o
 PLATFORMNAME=win32
