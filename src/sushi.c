@@ -60,7 +60,7 @@ int sushi_print_stacktrace(lua_State* state)
 	const char* e2 = sushi_error_to_string(state);
 	if(e1 != NULL && e2 != NULL) {
 		lua_pop(state, 2);
-		char* v = (char*)malloc(strlen(e1) + 1 + strlen(e2));
+		char* v = (char*)malloc(strlen(e1) + 1 + strlen(e2) + 1);
 		strcpy(v, e1);
 		strcat(v, "\n");
 		strcat(v, e2);

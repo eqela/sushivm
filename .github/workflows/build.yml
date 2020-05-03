@@ -16,7 +16,7 @@ jobs:
   build-linux:
     name: Linux Build
     runs-on: ubuntu-18.04
-    container: alpine:3.11.3
+    container: alpine:3.11.6
     steps:
     - uses: actions/checkout@v1
     - run: apk add --update alpine-sdk openssl-dev openssl-libs-static
