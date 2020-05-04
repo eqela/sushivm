@@ -62,7 +62,20 @@ function test_zlib()
 	return true
 end
 
+function test_bcrypt()
+	local factor = 12
+	local original = "florentinoortegaIII"
+	local salt = _bcrypt:generate_salt(factor)
+	local hash = _bcrypt:hash_password(original, salt)
+	local validation = _bcrypt:check_password(original, hash)
+	info("generated salt: " .. salt)
+	info("hashed password: " .. hash)
+	info("password validation: " .. validation)
+	return true
+end
+
 execute("test_global", test_global)
 execute("test_zlib", test_zlib)
+execute("test_bcrypt", test_bcrypt)
 
 return rv
