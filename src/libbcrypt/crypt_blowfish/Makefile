@@ -14,7 +14,8 @@
 # See crypt_blowfish.c for more information.
 #
 
-CC = gcc
+DEFAULT_CC = gcc
+CC= $(DEFAULT_CC)
 AS = $(CC)
 LD = $(CC)
 RM = rm -f

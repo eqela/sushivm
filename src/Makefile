@@ -69,7 +69,7 @@ LIBS=$(LIBS_SYSDEP)
 all: sushi test
 
 libcrypt:
-	make -C libbcrypt/ all
+	make CC="$(CC)" -C libbcrypt/ all
 
 ifeq (Darwin,$(LUAJIT_TARGET_SYS))
 libssl:

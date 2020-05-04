@@ -1,4 +1,5 @@
-CC = gcc
+DEFAULT_CC = gcc
+CC= $(DEFAULT_CC)
 CFLAGS = $(shell grep '^CFLAGS = ' crypt_blowfish/Makefile | cut -d= -f2-)
 .PHONY: crypt_blowfish
 
@@ -13,9 +14,8 @@ bcrypt.a: bcrypt.o crypt_blowfish
 
 bcrypt.o: bcrypt.c
 	$(CC) $(CFLAGS) -c bcrypt.c
-
 crypt_blowfish:
-	$(MAKE) -C crypt_blowfish
+	$(MAKE) CC="$(CC)" -C crypt_blowfish
 
 clean:
 	rm -f *.o bcrypt_test bcrypt.a *~ core
