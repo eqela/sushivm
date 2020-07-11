@@ -224,6 +224,10 @@ static int do_start_process(lua_State* state, int doFork, int fdin, int fdout, i
 	if(lua_isnil(state, 4) == 0 && lua_isstring(state, 4) == 1) {
 		cwd = lua_tostring(state, 4);
 	}
+	int detachFromTerminal = 0;
+	if(lua_isnil(state, 5) == 0 && lua_isnumber(state, 5) == 1) {
+		detachFromTerminal = lua_tonumber(state, 5);
+	}
 	if(doFork == 1) {
 		int pid = fork();
 		if(pid != 0) {
@@ -245,6 +249,20 @@ static int do_start_process(lua_State* state, int doFork, int fdin, int fdout, i
 	}
 	if(cwd != NULL) {
 		chdir(cwd);
+	}
+	if(detachFromTerminal != 0) {
+		if(setsid() < 0) {
+			sushi_error("setsid failed");
+		}
+		if(fdin < 0) {
+			close(STDIN_FILENO);
+		}
+		if(fdout < 0) {
+			close(STDOUT_FILENO);
+		}
+		if(fderr < 0) {
+			close(STDERR_FILENO);
+		}
 	}
 	execve(cmd, args, envp);
 	free(args);
