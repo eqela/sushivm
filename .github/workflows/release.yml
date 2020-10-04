@@ -12,7 +12,8 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - run: sudo apt install gcc-mingw-w64-x86-64
-    - run: make VERSION="${GITHUB_REF#refs/tags/}" CROSSTARGET="win32" -C src release
+    - run: curl https://files.eqela.com/eqelart/6.x/eqelart-6.0.9_linux.zip -o eqela.zip && mkdir eqela && cd eqela && unzip ../eqela.zip && rm ../eqela.zip && cd ..
+    - run: PATH="`pwd`/eqela:$PATH" make VERSION="${GITHUB_REF#refs/tags/}" CROSSTARGET="win32" -C src release
     - uses: actions/upload-artifact@v1
       with:
         name: release-windows
@@ -24,7 +25,8 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - run: apk add --update alpine-sdk openssl-dev openssl-libs-static zip
-    - run: make VERSION="${GITHUB_REF#refs/tags/}" STATIC_BUILD="yes" -C src release
+    - run: curl https://files.eqela.com/eqelart/6.x/eqelart-6.0.9_linux.zip -o eqela.zip && mkdir eqela && cd eqela && unzip ../eqela.zip && rm ../eqela.zip && cd ..
+    - run: PATH="`pwd`/eqela:$PATH" make VERSION="${GITHUB_REF#refs/tags/}" STATIC_BUILD="yes" -C src release
     - uses: actions/upload-artifact@v1
       with:
         name: release-linux
@@ -34,7 +36,8 @@ jobs:
     runs-on: macOS-10.15
     steps:
     - uses: actions/checkout@v1
-    - run: make VERSION="${GITHUB_REF#refs/tags/}" -C src release
+    - run: curl https://files.eqela.com/eqelart/6.x/eqelart-6.0.9_macos.zip -o eqela.zip && mkdir eqela && cd eqela && unzip ../eqela.zip && rm ../eqela.zip && cd ..
+    - run: PATH="`pwd`/eqela:$PATH" make VERSION="${GITHUB_REF#refs/tags/}" -C src release
     - uses: actions/upload-artifact@v1
       with:
         name: release-macos

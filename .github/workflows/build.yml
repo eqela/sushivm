@@ -12,7 +12,8 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - run: sudo apt install gcc-mingw-w64-x86-64
-    - run: make CROSSTARGET="win32" -C src
+    - run: curl https://files.eqela.com/eqelart/6.x/eqelart-6.0.9_linux.zip -o eqela.zip && mkdir eqela && cd eqela && unzip ../eqela.zip && rm ../eqela.zip && cd ..
+    - run: PATH="`pwd`/eqela:$PATH" make CROSSTARGET="win32" -C src
   build-linux:
     name: Linux Build
     runs-on: ubuntu-18.04
@@ -20,10 +21,12 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - run: apk add --update alpine-sdk openssl-dev openssl-libs-static
-    - run: make STATIC_BUILD="yes" -C src
+    - run: curl https://files.eqela.com/eqelart/6.x/eqelart-6.0.9_linux.zip -o eqela.zip && mkdir eqela && cd eqela && unzip ../eqela.zip && rm ../eqela.zip && cd ..
+    - run: PATH="`pwd`/eqela:$PATH" make STATIC_BUILD="yes" -C src
   build-macos:
     name: MacOS Build
     runs-on: macOS-10.15
     steps:
     - uses: actions/checkout@v1
-    - run: make -C src
+    - run: curl https://files.eqela.com/eqelart/6.x/eqelart-6.0.9_macos.zip -o eqela.zip && mkdir eqela && cd eqela && unzip ../eqela.zip && rm ../eqela.zip && cd ..
+    - run: PATH="`pwd`/eqela:$PATH" make -C src
