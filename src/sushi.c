@@ -53,6 +53,23 @@
 
 static int errors = 0;
 static const char* executable_path = NULL;
+static char* profile_directory = NULL;
+
+const char* sushi_get_profile_directory()
+{
+	return profile_directory;
+}
+
+void sushi_set_profile_directory(const char* dir)
+{
+	if(profile_directory != NULL) {
+		free(profile_directory);
+		profile_directory = NULL;
+	}
+	if(dir != NULL) {
+		profile_directory = strdup(dir);
+	}
+}
 
 int sushi_print_stacktrace(lua_State* state)
 {

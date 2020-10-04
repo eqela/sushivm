@@ -91,6 +91,17 @@ int get_environment_variable(lua_State* state)
 	return 1;
 }
 
+int set_environment_variable(lua_State* state)
+{
+	const char* varname = lua_tostring(state, 2);
+	if(varname == NULL) {
+		return 0;
+	}
+	const char* value = lua_tostring(state, 3);
+	setenv(varname, value, 1);
+	return 0;
+}
+
 int get_system_type(lua_State* state)
 {
 #if defined(SUSHI_SUPPORT_LINUX)

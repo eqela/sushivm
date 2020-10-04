@@ -12,3 +12,6 @@ lj_vm.S
 sushi
 *.exe
 build
+*.3
+src/install_application.c
+src/install_application.lz

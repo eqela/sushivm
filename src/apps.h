@@ -22,53 +22,11 @@
  * SOFTWARE.
  */
 
-#include "lib_bcrypt.h"
+#ifndef APPS_H
+#define APPS_H
 
-int generate_salt(lua_State* state)
-{
-	int factor = luaL_checkint(state, 2);
-	char salt[BCRYPT_HASHSIZE];
-	int ret = bcrypt_gensalt(factor, salt);
-	if(ret == 1) {
-		lua_pushstring(state, "");
-		return 1;
-	}
-	lua_pushstring(state, salt);
-	return 1;
-}
+void apps_set_directory(const char* dir);
+int apps_install_file(const char* file);
+char* apps_get_executable_file(const char* appName, char* buffer, int bufferSize, int allow_download);
 
-int hash_password(lua_State* state)
-{
-	const char* password = luaL_checkstring(state, 2);
-	const char* salt = luaL_checkstring(state, 3);
-	char hash[BCRYPT_HASHSIZE];
-	int ret = bcrypt_hashpw(password, salt, hash);
-	if(ret == 1) {
-		lua_pushstring(state, "");
-		return 1;
-	}
-	lua_pushstring(state, hash);
-	return 1;
-}
-
-int check_password(lua_State* state)
-{
-	const char* password = luaL_checkstring(state, 2);
-	const char* hash = luaL_checkstring(state, 3);
-	int v = bcrypt_checkpw(password, hash);
-	lua_pushnumber(state, v);
-	return 1;
-}
-
-static const luaL_Reg funcs[] = {
-	{ "generate_salt", generate_salt },
-	{ "hash_password", hash_password },
-	{ "check_password", check_password },
-	{ NULL, NULL }
-};
-
-void lib_bcrypt_init(lua_State* state)
-{
-	luaL_newlib(state, funcs);
-	lua_setglobal(state, "_bcrypt");
-}
+#endif

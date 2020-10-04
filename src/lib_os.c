@@ -29,6 +29,7 @@ int sleep_microseconds(lua_State* state);
 int sleep_milliseconds(lua_State* state);
 int get_all_environment_variables(lua_State* state);
 int get_environment_variable(lua_State* state);
+int set_environment_variable(lua_State* state);
 int get_system_type(lua_State* state);
 int get_system_time_seconds(lua_State* state);
 int get_system_time_milliseconds(lua_State* state);
@@ -52,6 +53,7 @@ static const luaL_Reg funcs[] = {
 	{ "sleep_milliseconds", sleep_milliseconds },
 	{ "get_all_environment_variables", get_all_environment_variables },
 	{ "get_environment_variable", get_environment_variable },
+	{ "set_environment_variable", set_environment_variable },
 	{ "get_system_type", get_system_type },
 	{ "get_system_time_seconds", get_system_time_seconds },
 	{ "get_system_time_milliseconds", get_system_time_milliseconds },

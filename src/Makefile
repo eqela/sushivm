@@ -42,7 +42,10 @@ ifeq ($(VERSION),)
 	VERSION=`date '+%Y%m%d'`
 endif
 OBJS=main.o \
+	shebang.o \
+	apps.o \
 	sushi.o \
+	install_application.o \
 	lmarshal.o \
 	zbuf.o \
 	lib_crypto.o \
@@ -88,6 +91,12 @@ libluajit:
 	make CC="$(CC)" HOST_CC="$(HOST_CC_SYSDEP)" TARGET_SYS="$(LUAJIT_TARGET_SYS)" Q= -C luajit/src libluajit.a
 endif
 
+install_application.lz: install_application.ss
+	eqela ss-0.17 -o install_application.lz -c install_application.ss
+
+install_application.c: install_application.lz
+	eqela binary_to_code.ss install_application.lz install_application_lz install_application.c
+
 sushi: libluajit libssl libcrypt $(OBJS)
 	$(CC) -o sushi$(EXESUFFIX) $(OBJS) luajit/src/libluajit.a libbcrypt/bcrypt.a $(LDFLAGS) $(LIBS)
 
@@ -105,6 +114,7 @@ release: sushi
 	zip -j release/sushi_$(VERSION)_$(PLATFORMNAME).zip sushi$(EXESUFFIX) ../LICENSE ../README.md
 
 clean:
+	rm -f install_application.c install_application.lz
 	make -C luajit/src clean
 	make -C libbcrypt/ clean
 	rm -rf release

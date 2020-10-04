@@ -1,4 +1,4 @@
-
+#! eqela ss-0.17
 #
 # This file is part of SushiVM
 # Copyright (c) 2019-2020 Eqela Oy
@@ -21,17 +21,35 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-
-CC_SYSDEP=x86_64-w64-mingw32-gcc
-STRIP_SYSDEP=x86_64-w64-mingw32-strip
-HOST_CC_SYSDEP=gcc
-LUAJIT_TARGET_SYS=Windows
-CFLAGS_SYSDEP=-DSUSHI_SUPPORT_WIN32
-LDFLAGS_SYSDEP=
-LIBS_SYSDEP=-lm -lws2_32 -luuid -lole32
-EXESUFFIX=.exe
-OBJS_SYSDEP=\
-	lib_net_iomgr_dummy.o \
-	lib_os_win32.o \
-	lib_crypto_dummy.o
-PLATFORMNAME=win32
+lib jk-core:0.18.0
+import jk.lang
+import jk.fs
+var src = args[0]
+var varname = args[1]
+var dst = args[2]
+var srcfile = jk.fs.File.forPath(src)
+var data = srcfile.getContentsBuffer()
+if not data:
+    Error.throw("failedToReadFile", srcfile)
+var size = sizeof data
+var sb = new StringBuilder()
+sb.appendString("const unsigned char ")
+sb.appendString(varname)
+sb.appendString("[] = { ")
+var n = 0
+while n < size {
+    if n > 0:
+        sb.appendString(", ")
+    sb.appendString("0x")
+    sb.appendString(String.forIntegerHex(data[n], 0))
+    n++
+}
+sb.appendString(" };\n")
+sb.appendString("int ")
+sb.appendString(varname)
+sb.appendString("_size = ")
+sb.appendString(String.forInteger(size))
+sb.appendString(";\n")
+var dstfile = jk.fs.File.forPath(dst)
+if not dstfile.setContentsUTF8(sb.toString()):
+    Error.throw("failedToWriteFile", dstfile)
