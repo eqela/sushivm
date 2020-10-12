@@ -140,6 +140,10 @@ int ssl_write(lua_State* state)
 	}
 	SSL* ssl = NULL;
 	memcpy(&ssl, sslptr, sizeof(SSL*));
+	if(ssl == NULL) {
+		lua_pushnumber(state, -1);
+		return 1;
+	}
 	void* ptr = luaL_checkudata(state, 3, "_sushi_buffer");
 	if(ptr == NULL) {
 		lua_pushnumber(state, -1);
