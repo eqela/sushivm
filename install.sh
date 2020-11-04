@@ -53,7 +53,7 @@ fi
 # Install the downloaded file
 TARGETDIR="$VMDIR/$LATESTVERSION"
 rm -rf "$TARGETDIR"
-mkdir -p "$VMDIR"
+mkdir -p "$TARGETDIR"
 unzip "$DOWNLOADEDFILE" -d "$TARGETDIR" || exit 1
 rm -f "$BINDIR/sushi"
 mkdir -p "$BINDIR"
