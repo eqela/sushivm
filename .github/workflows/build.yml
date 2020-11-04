@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - run: sudo apt install gcc-mingw-w64-x86-64
-    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | sh
+    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | VERSION="v1.2.1" sh
     - run: PATH="$HOME/.sushi/bin:$PATH" make CROSSTARGET="win32" -C src
   build-linux:
     name: Linux Build
@@ -21,12 +21,12 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - run: apk add --update alpine-sdk openssl-dev openssl-libs-static
-    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | sh
+    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | VERSION="v1.2.1" sh
     - run: PATH="$HOME/.sushi/bin:$PATH" make STATIC_BUILD="yes" -C src
   build-macos:
     name: MacOS Build
     runs-on: macOS-10.15
     steps:
     - uses: actions/checkout@v1
-    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | sh
+    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | VERSION="v1.2.1" sh
     - run: PATH="$HOME/.sushi/bin:$PATH" make -C src

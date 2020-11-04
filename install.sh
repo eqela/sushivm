@@ -6,7 +6,12 @@
 # Default settings
 VMDIR="$HOME/.sushi/vm"
 BINDIR="$HOME/.sushi/bin"
-VERSION="latest"
+if [ "$VERSION" != "" ]; then
+	VERSION="tags/$VERSION"
+fi
+if [ "$VERSION" = "" ]; then
+	VERSION="latest"
+fi
 UNAME="$(uname)"
 # Operating system detection
 SYSTEM=""

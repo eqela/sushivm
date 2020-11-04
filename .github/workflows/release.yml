@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - run: sudo apt install gcc-mingw-w64-x86-64
-    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | sh
+    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | VERSION="v1.2.1" sh
     - run: PATH="$HOME/.sushi/bin:$PATH" make VERSION="${GITHUB_REF#refs/tags/}" CROSSTARGET="win32" -C src release
     - uses: actions/upload-artifact@v1
       with:
@@ -25,7 +25,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - run: apk add --update alpine-sdk openssl-dev openssl-libs-static zip
-    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | sh
+    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | VERSION="v1.2.1" sh
     - run: PATH="$HOME/.sushi/bin:$PATH" make VERSION="${GITHUB_REF#refs/tags/}" STATIC_BUILD="yes" -C src release
     - uses: actions/upload-artifact@v1
       with:
@@ -36,7 +36,7 @@ jobs:
     runs-on: macOS-10.15
     steps:
     - uses: actions/checkout@v1
-    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | sh
+    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | VERSION="v1.2.1" sh
     - run: PATH="$HOME/.sushi/bin:$PATH" make VERSION="${GITHUB_REF#refs/tags/}" -C src release
     - uses: actions/upload-artifact@v1
       with:
