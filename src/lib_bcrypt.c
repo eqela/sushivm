@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include "libbcrypt/bcrypt.h"
 #include "lib_bcrypt.h"
 
 int generate_salt(lua_State* state)
