@@ -28,5 +28,6 @@
 #include "sushi.h"
 
 void lib_crypto_init(lua_State* state);
+void lib_crypto_global_init();
 
 #endif

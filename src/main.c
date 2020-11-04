@@ -353,6 +353,7 @@ static void show_usage(const char* v0)
 
 int main(int c, const char** v)
 {
+	sushi_init_libraries();
 	initialize_configuration();
 #if defined(SUSHI_SUPPORT_LINUX) || defined(SUSHI_SUPPORT_MACOS)
 	signal(SIGPIPE, SIG_IGN);

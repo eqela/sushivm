@@ -30,34 +30,16 @@
 #include <openssl/bio.h>
 #include "sushi.h"
 
-static int ssl_initialized = 0;
-static SSL_CTX* sslctx = NULL;
+static SSL_CTX* context = NULL;
 
-static void initialize_ssl()
+void lib_crypto_global_init()
 {
-	if(ssl_initialized == 0) {
-		ssl_initialized = 1;
-		SSL_library_init();
-		SSL_load_error_strings();
-		ERR_load_crypto_strings();
-		OpenSSL_add_all_algorithms();
-		SSLeay_add_ssl_algorithms();
-	}
+	context = SSL_CTX_new(TLS_client_method());
 }
 
 static SSL_CTX* get_ssl_client_context()
 {
-	if(sslctx == NULL) {
-		initialize_ssl();
-		const SSL_METHOD* method = NULL;
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
-		method = TLSv1_2_client_method();
-#else
-		method = TLS_client_method();
-#endif
-		sslctx = SSL_CTX_new(method);
-	}
-	return sslctx;
+	return context;
 }
 
 static SSL* create_ssl_for_socket_fd(int fd, const char* hostname)
@@ -67,6 +49,9 @@ static SSL* create_ssl_for_socket_fd(int fd, const char* hostname)
 		return NULL;
 	}
 	SSL* ssl = SSL_new(ctx);
+	if(ssl == NULL) {
+		return NULL;
+	}
 	SSL_set_fd(ssl, fd);
 	if(hostname != NULL) {
 		SSL_set_tlsext_host_name(ssl, hostname);
@@ -74,7 +59,6 @@ static SSL* create_ssl_for_socket_fd(int fd, const char* hostname)
 	if(SSL_connect(ssl) <= 0) {
 		ERR_print_errors_fp(stderr);
 		SSL_free(ssl);
-		SSL_CTX_free(ctx);
 		return NULL;
 	}
 	return ssl;
@@ -104,13 +88,16 @@ int ssl_connect(lua_State* state)
 
 int ssl_read(lua_State* state)
 {
-	void* sslptr = luaL_checkudata(state, 2, "_sushi_ssl");
+	SSL** sslptr = (SSL**)luaL_checkudata(state, 2, "_sushi_ssl");
 	if(sslptr == NULL) {
 		lua_pushnumber(state, -1);
 		return 1;
 	}
-	SSL* ssl = NULL;
-	memcpy(&ssl, sslptr, sizeof(SSL*));
+	SSL* ssl = *sslptr;
+	if(ssl == NULL) {
+		lua_pushnumber(state, -1);
+		return 1;
+	}
 	void* ptr = luaL_checkudata(state, 3, "_sushi_buffer");
 	if(ptr == NULL) {
 		lua_pushnumber(state, -1);
@@ -133,13 +120,12 @@ int ssl_read(lua_State* state)
 
 int ssl_write(lua_State* state)
 {
-	void* sslptr = luaL_checkudata(state, 2, "_sushi_ssl");
+	SSL** sslptr = luaL_checkudata(state, 2, "_sushi_ssl");
 	if(sslptr == NULL) {
 		lua_pushnumber(state, -1);
 		return 1;
 	}
-	SSL* ssl = NULL;
-	memcpy(&ssl, sslptr, sizeof(SSL*));
+	SSL* ssl = *sslptr;
 	if(ssl == NULL) {
 		lua_pushnumber(state, -1);
 		return 1;
@@ -167,17 +153,14 @@ int ssl_write(lua_State* state)
 
 int ssl_close_gc(lua_State* state)
 {
-	void* ptr = luaL_checkudata(state, 1, "_sushi_ssl");
+	SSL** ptr = (SSL**)luaL_checkudata(state, 1, "_sushi_ssl");
 	if(ptr == NULL) {
 		return 0;
 	}
-	SSL* ssl = NULL;
-	memcpy(&ssl, ptr, sizeof(SSL*));
-	if(ssl != NULL) {
-		destroy_ssl(ssl);
+	if(*ptr != NULL) {
+		destroy_ssl(*ptr);
+		*ptr = NULL;
 	}
-	ssl = NULL;
-	memcpy(ptr, &ssl, sizeof(SSL*));
 	return 0;
 }
 

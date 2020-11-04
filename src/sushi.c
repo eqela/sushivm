@@ -194,7 +194,12 @@ int sushi_has_errors()
 	return 0;
 }
 
-static void init_libraries(lua_State* state)
+void sushi_init_libraries()
+{
+	lib_crypto_global_init();
+}
+
+static void init_libraries_for_state(lua_State* state)
 {
 	lib_bcrypt_init(state);
 	lib_crypto_init(state);
@@ -215,7 +220,7 @@ lua_State* sushi_create_new_state()
 	if(nstate == NULL) {
 		return NULL;
 	}
-	init_libraries(nstate);
+	init_libraries_for_state(nstate);
 	return nstate;
 }
 

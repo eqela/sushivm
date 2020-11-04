@@ -24,6 +24,10 @@
 
 #include "sushi.h"
 
+void lib_crypto_global_init()
+{
+}
+
 int ssl_connect(lua_State* state)
 {
 	lua_pushnil(state);

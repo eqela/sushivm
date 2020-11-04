@@ -92,10 +92,10 @@ libluajit:
 endif
 
 install_application.lz: install_application.ss
-	eqela ss-0.17 -o install_application.lz -c install_application.ss
+	sushi ss-0.17 -o install_application.lz -c install_application.ss
 
 install_application.c: install_application.lz
-	eqela binary_to_code.ss install_application.lz install_application_lz install_application.c
+	sushi binary_to_code.ss install_application.lz install_application_lz install_application.c
 
 sushi: libluajit libssl libcrypt $(OBJS)
 	$(CC) -o sushi$(EXESUFFIX) $(OBJS) luajit/src/libluajit.a libbcrypt/bcrypt.a $(LDFLAGS) $(LIBS)

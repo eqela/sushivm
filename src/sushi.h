@@ -38,6 +38,7 @@ typedef struct
 }
 SushiCode;
 
+void sushi_init_libraries();
 const char* sushi_get_profile_directory();
 void sushi_set_profile_directory(const char* dir);
 int sushi_pcall(lua_State* state, int nargs, int nret);
