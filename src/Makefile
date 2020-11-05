@@ -56,6 +56,7 @@ OBJS=main.o \
 	lib_vm.o \
 	lib_mod.o \
 	lib_zip.o \
+	lib_image.o \
 	zlib/deflate.o zlib/inffast.o zlib/inflate.o zlib/inftrees.o zlib/zutil.o zlib/trees.o zlib/adler32.o zlib/crc32.o \
 	minizip/unzip.o minizip/zip.o minizip/ioapi.o \
 	lib_bcrypt.o \
@@ -66,7 +67,7 @@ LDFLAGS=$(LDFLAGS_SYSDEP)
 ifeq ($(STATIC_BUILD),yes)
 	LDFLAGS += -static
 endif
-LIBS=$(LIBS_SYSDEP)
+LIBS=-lpng $(LIBS_SYSDEP)
 
 all: sushi test
 
