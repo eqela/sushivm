@@ -81,15 +81,7 @@ static int encode_png_data(lua_State* state)
 		lua_pushnil(state);
 		return 1;
 	}
-	png_set_IHDR(png_ptr,
-				 info_ptr,
-				 width,
-				 height,
-				 8,
-				 PNG_COLOR_TYPE_RGB_ALPHA,
-				 PNG_INTERLACE_NONE,
-				 PNG_COMPRESSION_TYPE_DEFAULT,
-				 PNG_FILTER_TYPE_DEFAULT);
+	png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 	int y;
 	int x;
 	png_byte **row_pointers = png_malloc(png_ptr, sizeof(png_byte) * height);
@@ -122,10 +114,7 @@ static int encode_png_data(lua_State* state)
 	luaL_getmetatable(state, "_sushi_buffer");
 	lua_setmetatable(state, -2);
 	memcpy(ptr, &pdh.size, sizeof(long));
-	long i;
-	for(i = 0; i < pdh.size; i++) {
-		((unsigned char*)ptr)[sizeof(long) + i] = (unsigned char*)pdh.buffer[i];
-	}
+	memcpy(ptr + sizeof(long), pdh.buffer, pdh.size);
 	return 1;
 }
 
