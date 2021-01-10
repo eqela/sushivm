@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -194,6 +195,38 @@ static int remove_file(lua_State* state)
 		return 1;
 	}
 	if(unlink(path) == 0) {
+		lua_pushnumber(state, 1);
+	}
+	else {
+		lua_pushnumber(state, 0);
+	}
+	return 1;
+}
+
+static int rename_path(lua_State* state)
+{
+	const char* oldpath = lua_tostring(state, 2);
+	if(oldpath == NULL) {
+		lua_pushnumber(state, 0);
+		return 1;
+	}
+	const char* newpath = lua_tostring(state, 3);
+	if(newpath == NULL) {
+		lua_pushnumber(state, 0);
+		return 1;
+	}
+	struct stat st;
+	if(stat(oldpath, &st) != 0) {
+		// oldpath does not exist
+		lua_pushnumber(state, 0);
+		return 1;
+	}
+	if(stat(newpath, &st) == 0) {
+		// newpath already exists
+		lua_pushnumber(state, 0);
+		return 1;
+	}
+	if(rename(oldpath, newpath) == 0) {
 		lua_pushnumber(state, 1);
 	}
 	else {
@@ -486,6 +519,7 @@ static const luaL_Reg funcs[] = {
 	{ "create_directory", create_directory },
 	{ "touch_file", touch_file },
 	{ "remove_file", remove_file },
+	{ "rename_path", rename_path },
 	{ "remove_directory", remove_directory },
 	{ "close_directory", close_directory },
 	{ "read_directory", read_directory },
