@@ -100,12 +100,12 @@ static int encode_png_data(lua_State* state)
 	png_write_info(png_ptr, info_ptr);
 	png_write_image(png_ptr, row_pointers);
 	png_write_end(png_ptr, info_ptr);
-	png_destroy_write_struct(&png_ptr, &info_ptr);
 	int c;
 	for(c = 0; c < height; c++) {
 		png_free(png_ptr, row_pointers[c]);
 	}
 	png_free(png_ptr, row_pointers);
+	png_destroy_write_struct(&png_ptr, &info_ptr);
 	if(pdh.size <= 0) {
 		lua_pushnil(state);
 		return 1;
