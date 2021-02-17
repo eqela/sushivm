@@ -71,8 +71,12 @@ LIBS=$(LIBS_SYSDEP)
 
 all: sushi test
 
+### Libcrypt
+
 libcrypt:
 	make CC="$(CC)" -C libbcrypt/ all
+
+### OpenSSL
 
 ifeq (Darwin,$(LUAJIT_TARGET_SYS))
 libssl:
@@ -84,22 +88,28 @@ libssl:
 	echo Not building openssl
 endif
 
+### Libpng
+
 ifeq (Windows,$(LUAJIT_TARGET_SYS))
 libpng:
 	if [ ! -f png/build/.libs/libpng16.a ]; then \
 		(cd png && tar xvf libpng-1.6.37.tar.gz && rm -rf build && mv libpng-1.6.37 build && cp config.cache build && cd build && ./configure --prefix=$(shell pwd)/png/build --host=x86_64-w64-mingw32 --cache-file=config.cache CPPFLAGS=-I$(shell pwd)/zlib --enable-static --disable-shared && make libpng16.la LIBS="-lm") ; \
 	fi
-else
+endif
 ifeq (Linux,$(LUAJIT_TARGET_SYS))
 libpng:
 	if [ ! -f png/build/.libs/libpng16.a ]; then \
 		(cd png && tar xvf libpng-1.6.37.tar.gz && rm -rf build && mv libpng-1.6.37 build && cp config.cache build && cd build && ./configure --prefix=$(shell pwd)/png/build --cache-file=config.cache CPPFLAGS=-I$(shell pwd)/zlib --enable-static --disable-shared && make libpng16.la LIBS="-lm") ; \
 	fi
-else
+endif
+ifeq (Darwin,$(LUAJIT_TARGET_SYS))
 libpng:
-	echo Not building libpng
+	if [ ! -f png/build/.libs/libpng16.a ]; then \
+		(cd png && tar xvf libpng-1.6.37.tar.gz && rm -rf build && mv libpng-1.6.37 build && cp config.cache build && cd build && ./configure --prefix=$(shell pwd)/png/build --cache-file=config.cache CPPFLAGS=-I$(shell pwd)/zlib --enable-static --disable-shared && make libpng16.la LIBS="-lm") ; \
+	fi
 endif
-endif
+
+### LuaJIT
 
 ifeq (Darwin,$(LUAJIT_TARGET_SYS))
 libluajit:
