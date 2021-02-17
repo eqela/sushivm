@@ -26,9 +26,9 @@ CC_SYSDEP=x86_64-w64-mingw32-gcc
 STRIP_SYSDEP=x86_64-w64-mingw32-strip
 HOST_CC_SYSDEP=gcc
 LUAJIT_TARGET_SYS=Windows
-CFLAGS_SYSDEP=-DSUSHI_SUPPORT_WIN32
+CFLAGS_SYSDEP=-DSUSHI_SUPPORT_WIN32 -Ipng/build
 LDFLAGS_SYSDEP=
-LIBS_SYSDEP=-lm -lws2_32 -luuid -lole32
+LIBS_SYSDEP=-Lpng/build/.libs -lm -lws2_32 -luuid -lole32
 EXESUFFIX=.exe
 OBJS_SYSDEP=\
 	lib_net_iomgr_dummy.o \

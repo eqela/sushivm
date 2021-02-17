@@ -56,6 +56,7 @@ OBJS=main.o \
 	lib_vm.o \
 	lib_mod.o \
 	lib_zip.o \
+	lib_image.o \
 	zlib/deflate.o zlib/inffast.o zlib/inflate.o zlib/inftrees.o zlib/zutil.o zlib/trees.o zlib/adler32.o zlib/crc32.o \
 	minizip/unzip.o minizip/zip.o minizip/ioapi.o \
 	lib_bcrypt.o \
@@ -66,7 +67,11 @@ LDFLAGS=$(LDFLAGS_SYSDEP)
 ifeq ($(STATIC_BUILD),yes)
 	LDFLAGS += -static
 endif
-LIBS=$(LIBS_SYSDEP)
+ifeq (Windows,$(LUAJIT_TARGET_SYS))
+	LIBS=$(LIBS_SYSDEP) -lpng16
+else
+	LIBS=$(LIBS_SYSDEP) -lpng
+endif
 
 all: sushi test
 
@@ -83,6 +88,16 @@ libssl:
 	echo Not building openssl
 endif
 
+ifeq (Windows,$(LUAJIT_TARGET_SYS))
+libpng:
+	if [ ! -f png/build/.libs/libpng16.a ]; then \
+		(cd png && tar xvf libpng-1.6.37.tar.gz && rm -rf build && mv libpng-1.6.37 build && cp config.cache build && cd build && ./configure --prefix=$(shell pwd)/png/build --host=x86_64-w64-mingw32 --cache-file=config.cache CPPFLAGS=-I$(shell pwd)/zlib --enable-static --disable-shared && make libpng16.la LIBS="-lm") ; \
+	fi
+else
+libpng:
+	echo Not building libpng
+endif
+
 ifeq (Darwin,$(LUAJIT_TARGET_SYS))
 libluajit:
 	make MACOSX_DEPLOYMENT_TARGET="$(MACOS_GCC_VERSION)" CC="$(CC)" HOST_CC="$(HOST_CC_SYSDEP)" TARGET_SYS="$(LUAJIT_TARGET_SYS)" Q= -C luajit/src libluajit.a
@@ -97,7 +112,7 @@ install_application.lz: install_application.ss
 install_application.c: install_application.lz
 	sushi binary_to_code.ss install_application.lz install_application_lz install_application.c
 
-sushi: libluajit libssl libcrypt $(OBJS)
+sushi: libluajit libssl libcrypt libpng $(OBJS)
 	$(CC) -o sushi$(EXESUFFIX) $(OBJS) luajit/src/libluajit.a libbcrypt/bcrypt.a $(LDFLAGS) $(LIBS)
 
 test:
@@ -119,4 +134,5 @@ clean:
 	make -C libbcrypt/ clean
 	rm -rf release
 	rm -rf openssl/build
+	rm -rf png/build
 	rm -f $(OBJS) sushi sushi.exe

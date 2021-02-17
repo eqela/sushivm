@@ -49,6 +49,7 @@
 #include "lib_vm.h"
 #include "lib_mod.h"
 #include "lib_zip.h"
+#include "lib_image.h"
 #include "zbuf.h"
 
 static int errors = 0;
@@ -210,6 +211,7 @@ static void init_libraries_for_state(lua_State* state)
 	lib_vm_init(state);
 	lib_mod_init(state);
 	lib_zip_init(state);
+	lib_image_init(state);
 	lua_pushvalue(state ,(-10002));
 	lua_setglobal(state ,"_g");
 }
