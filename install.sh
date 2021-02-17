@@ -6,9 +6,6 @@
 # Default settings
 VMDIR="$HOME/.sushi/vm"
 BINDIR="$HOME/.sushi/bin"
-if [ "$VERSION" != "" ]; then
-	VERSION="tags/$VERSION"
-fi
 if [ "$VERSION" = "" ]; then
 	VERSION="latest"
 fi
@@ -33,7 +30,11 @@ if [ "$INSTALLEDVERSION" != "" ]; then
 	echo "Installed Sushi version: $INSTALLEDVERSION ($INSTALLEDVM)"
 fi
 # Latest version detection
-LATESTURL="$(curl -s https://api.github.com/repos/eqela/sushivm/releases/${VERSION}|grep browser_download_url|grep "_${SYSTEM}.zip" | sed -e 's/.*"\(https:\/\/[^"]*\).*/\1/')"
+if [ "$VERSION" = "latest" ]; then
+	LATESTURL="$(curl -s "https://api.github.com/repos/eqela/sushivm/releases/${VERSION}" | grep browser_download_url | grep "_${SYSTEM}.zip" | sed -e 's/.*"\(https:\/\/[^"]*\).*/\1/')"
+else
+	LATESTURL="https://github.com/eqela/sushivm/releases/download/${VERSION}/sushi_${VERSION}_${SYSTEM}.zip"
+fi
 LATESTVERSION="$(echo "$LATESTURL" | sed -e 's/.*\/sushi_\([^_]*\).*/\1/')"
 if [ "$LATESTVERSION" = "" ]; then
 	echo "ERROR: Failed to determine latest version"
