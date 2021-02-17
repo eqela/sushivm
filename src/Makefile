@@ -90,8 +90,15 @@ libpng:
 		(cd png && tar xvf libpng-1.6.37.tar.gz && rm -rf build && mv libpng-1.6.37 build && cp config.cache build && cd build && ./configure --prefix=$(shell pwd)/png/build --host=x86_64-w64-mingw32 --cache-file=config.cache CPPFLAGS=-I$(shell pwd)/zlib --enable-static --disable-shared && make libpng16.la LIBS="-lm") ; \
 	fi
 else
+ifeq (Linux,$(LUAJIT_TARGET_SYS))
+libpng:
+	if [ ! -f png/build/.libs/libpng16.a ]; then \
+		(cd png && tar xvf libpng-1.6.37.tar.gz && rm -rf build && mv libpng-1.6.37 build && cp config.cache build && cd build && ./configure --prefix=$(shell pwd)/png/build --cache-file=config.cache CPPFLAGS=-I$(shell pwd)/zlib --enable-static --disable-shared && make libpng16.la LIBS="-lm") ; \
+	fi
+else
 libpng:
 	echo Not building libpng
+endif
 endif
 
 ifeq (Darwin,$(LUAJIT_TARGET_SYS))

@@ -26,15 +26,14 @@ CC_SYSDEP=gcc
 STRIP_SYSDEP=strip
 HOST_CC_SYSDEP=gcc
 LUAJIT_TARGET_SYS=Linux
-CFLAGS_SYSDEP= \
-	-DSUSHI_SUPPORT_LINUX
-LIBS_SYSDEP=-lm -ldl -lpthread
+CFLAGS_SYSDEP=-DSUSHI_SUPPORT_LINUX -Ipng/build
+LIBS_SYSDEP=-Lpng/build/.libs -lpng16 -lm -ldl -lpthread
 ifeq ($(STATIC_BUILD),yes)
-	CFLAGS_SYSDEP += `pkg-config openssl libpng --static --cflags`
-	LIBS_SYSDEP += `pkg-config openssl libpng --static --libs`
+	CFLAGS_SYSDEP += `pkg-config openssl --static --cflags`
+	LIBS_SYSDEP += `pkg-config openssl --static --libs`
 else
-	CFLAGS_SYSDEP += `pkg-config openssl libpng --cflags`
-	LIBS_SYSDEP += `pkg-config openssl libpng --libs`
+	CFLAGS_SYSDEP += `pkg-config openssl --cflags`
+	LIBS_SYSDEP += `pkg-config openssl --libs`
 endif
 OBJS_SYSDEP=\
 	lib_net_iomgr_epoll.o \
