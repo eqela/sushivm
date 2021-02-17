@@ -28,5 +28,5 @@ jobs:
     runs-on: macOS-10.15
     steps:
     - uses: actions/checkout@v1
-    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/mjktest/install.sh | VERSION="v1.4.0" sh
+    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | VERSION="v1.4.0" sh
     - run: PATH="$HOME/.sushi/bin:$PATH" make -C src
