@@ -3,8 +3,8 @@ name: Build
 on:
   push:
     branches:
-      - master
       - dev/*
+  workflow_dispatch:
 
 jobs:
   build-windows:
