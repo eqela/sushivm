@@ -20,7 +20,7 @@ jobs:
     container: alpine:3.11.6
     steps:
     - uses: actions/checkout@v1
-    - run: apk add --update alpine-sdk openssl-dev openssl-libs-static
+    - run: apk add --update alpine-sdk openssl-dev openssl-libs-static libpng libpng-dev libpng-static
     - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | VERSION="v1.2.1" sh
     - run: PATH="$HOME/.sushi/bin:$PATH" make STATIC_BUILD="yes" -C src
   build-macos:

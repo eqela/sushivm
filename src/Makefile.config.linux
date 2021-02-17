@@ -30,11 +30,11 @@ CFLAGS_SYSDEP= \
 	-DSUSHI_SUPPORT_LINUX
 LIBS_SYSDEP=-lm -ldl -lpthread
 ifeq ($(STATIC_BUILD),yes)
-	CFLAGS_SYSDEP += `pkg-config openssl --static --cflags`
-	LIBS_SYSDEP += `pkg-config openssl --static --libs`
+	CFLAGS_SYSDEP += `pkg-config openssl libpng --static --cflags`
+	LIBS_SYSDEP += `pkg-config openssl libpng --static --libs`
 else
-	CFLAGS_SYSDEP += `pkg-config openssl --cflags`
-	LIBS_SYSDEP += `pkg-config openssl --libs`
+	CFLAGS_SYSDEP += `pkg-config openssl libpng --cflags`
+	LIBS_SYSDEP += `pkg-config openssl libpng --libs`
 endif
 OBJS_SYSDEP=\
 	lib_net_iomgr_epoll.o \

@@ -28,7 +28,7 @@ STRIP_SYSDEP=strip
 HOST_CC_SYSDEP=gcc
 LUAJIT_TARGET_SYS=Darwin
 CFLAGS_SYSDEP=-DSUSHI_SUPPORT_MACOS -Iopenssl/build/include
-LIBS_SYSDEP=-Lopenssl/build -lcrypto -lssl
+LIBS_SYSDEP=-Lopenssl/build -lcrypto -lssl -lpng
 OBJS_SYSDEP=\
 	lib_net_iomgr_select.o \
 	lib_os_posix.o \

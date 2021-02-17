@@ -67,11 +67,7 @@ LDFLAGS=$(LDFLAGS_SYSDEP)
 ifeq ($(STATIC_BUILD),yes)
 	LDFLAGS += -static
 endif
-ifeq (Windows,$(LUAJIT_TARGET_SYS))
-	LIBS=$(LIBS_SYSDEP) -lpng16
-else
-	LIBS=$(LIBS_SYSDEP) -lpng
-endif
+LIBS=$(LIBS_SYSDEP)
 
 all: sushi test
 
