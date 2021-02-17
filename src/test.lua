@@ -74,8 +74,29 @@ function test_bcrypt()
 	return true
 end
 
+function test_image()
+	local width = 100
+	local height = 100
+	local sz = width * height * 4
+	local buffer = _util:allocate_buffer(sz)
+	local ii = 0
+	while ii < sz do
+		do buffer[(function() local v = ii ii = ii + 1 return v end)() + 1] = 0 end
+		do buffer[(function() local v = ii ii = ii + 1 return v end)() + 1] = 0 end
+		do buffer[(function() local v = ii ii = ii + 1 return v end)() + 1] = 0 end
+		do buffer[(function() local v = ii ii = ii + 1 return v end)() + 1] = 255 end
+	end
+	local png = _image:encode_png_data(buffer, width, height)
+	if png == nil then
+		error("Failed to encode png data")
+		return false
+	end
+	return true
+end
+
 execute("test_global", test_global)
 execute("test_zlib", test_zlib)
 execute("test_bcrypt", test_bcrypt)
+execute("test_image", test_image)
 
 return rv

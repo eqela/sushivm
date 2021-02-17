@@ -82,9 +82,10 @@ static int encode_png_data(lua_State* state)
 		return 1;
 	}
 	png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	data = data + sizeof(long);
 	int y;
 	int x;
-	png_byte **row_pointers = png_malloc(png_ptr, sizeof(png_byte) * height);
+	png_byte **row_pointers = png_malloc(png_ptr, sizeof(png_byte*) * height);
 	for(y = 0; y < height; y++) {
 		long rowcount = sizeof(png_byte) * width * 4;
 		png_byte *row = png_malloc(png_ptr, rowcount);
@@ -102,19 +103,30 @@ static int encode_png_data(lua_State* state)
 	png_write_end(png_ptr, info_ptr);
 	int c;
 	for(c = 0; c < height; c++) {
-		png_free(png_ptr, row_pointers[c]);
+		if(row_pointers[c] != NULL) {
+			png_free(png_ptr, row_pointers[c]);
+			row_pointers[c] = NULL;
+		}
 	}
-	png_free(png_ptr, row_pointers);
+	if(row_pointers != NULL) {
+		png_free(png_ptr, row_pointers);
+		row_pointers = NULL;
+	}
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 	if(pdh.size <= 0) {
 		lua_pushnil(state);
 		return 1;
 	}
-	void* ptr = lua_newuserdata(state, pdh.size);
+	void* ptr = lua_newuserdata(state, pdh.size + sizeof(long));
+	long size = (long)pdh.size;
 	luaL_getmetatable(state, "_sushi_buffer");
 	lua_setmetatable(state, -2);
-	memcpy(ptr, &pdh.size, sizeof(long));
-	memcpy(ptr + sizeof(long), pdh.buffer, pdh.size);
+	memcpy(ptr, &size, sizeof(long));
+	memcpy(ptr + sizeof(long), pdh.buffer, size);
+	if(pdh.buffer != NULL) {
+		free(pdh.buffer);
+		pdh.buffer = NULL;
+	}
 	return 1;
 }
 
