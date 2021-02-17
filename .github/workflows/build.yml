@@ -25,8 +25,8 @@ jobs:
     - run: PATH="$HOME/.sushi/bin:$PATH" make STATIC_BUILD="yes" -C src
   build-macos:
     name: MacOS Build
-    runs-on: macos-11.0
+    runs-on: macOS-10.15
     steps:
     - uses: actions/checkout@v1
-    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | VERSION="v1.2.1" sh
+    - run: curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | VERSION="v1.4.0" sh -x
     - run: PATH="$HOME/.sushi/bin:$PATH" make -C src
