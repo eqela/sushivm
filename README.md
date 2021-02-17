@@ -29,7 +29,7 @@ On MacOS and Linux, Sushi can be conveniently installed and updated by running t
 script from the command line terminal as follows:
 
 ```
-curl -o- https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | sh
+curl https://raw.githubusercontent.com/eqela/sushivm/master/install.sh | sh
 ```
 
 The installation script updates PATH and also updates to the latest version if an older version
