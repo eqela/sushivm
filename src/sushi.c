@@ -43,6 +43,7 @@
 #include "lib_bcrypt.h"
 #include "lib_crypto.h"
 #include "lib_io.h"
+#include "lib_math.h"
 #include "lib_net.h"
 #include "lib_os.h"
 #include "lib_util.h"
@@ -205,6 +206,7 @@ static void init_libraries_for_state(lua_State* state)
 	lib_bcrypt_init(state);
 	lib_crypto_init(state);
 	lib_io_init(state);
+	lib_math_init(state);
 	lib_net_init(state);
 	lib_os_init(state);
 	lib_util_init(state);

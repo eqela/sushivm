@@ -60,6 +60,7 @@ OBJS=main.o \
 	zlib/deflate.o zlib/inffast.o zlib/inflate.o zlib/inftrees.o zlib/zutil.o zlib/trees.o zlib/adler32.o zlib/crc32.o \
 	minizip/unzip.o minizip/zip.o minizip/ioapi.o \
 	lib_bcrypt.o \
+	lib_math.o \
 	$(OBJS_SYSDEP)
 CC=$(CC_SYSDEP)
 CFLAGS=-Iluajit/src -Izlib -Iminizip -DSUSHI_VERSION=\"$(VERSION)\" -DSUSHI_SUPPORT_ZLIB $(CFLAGS_SYSDEP)

@@ -94,9 +94,116 @@ function test_image()
 	return true
 end
 
+function is_not_equal(value1, value2)
+	local a = _util:create_string_for_float(value1)
+	local b = _util:create_string_for_float(value2)
+	return a ~= b
+end
+
+function test_math()
+	if _math:abs(200) ~= 200 then
+		error("abs is incorrect")
+		return false
+	end
+	if _math:fabs(200) ~= 200 then
+		error("fabs is incorrect")
+		return false
+	end
+	if is_not_equal(_math:acos(-0.50), 2.0943951023932) then
+		error("acos is incorrect")
+		return false
+	end
+	if is_not_equal(_math:asin(-0.50), -0.5235987755983) then
+		error("asin is incorrect")
+		return false
+	end
+	if is_not_equal(_math:atan(1.0), 0.78539816339745) then
+		error("atan is incorrect")
+		return false
+	end
+	if not is_not_equal(_math:atan2(2.53, -10.2), 2.898460284234) then
+		error("atan2 is incorrect")
+		return false
+	end
+	if _math:ceil(2.3) ~= 3 then
+		error("ceil is incorrect")
+		return false
+	end
+	if is_not_equal(_math:cos(1.2), 0.36235775447667) then
+		error("cos is incorrect")
+		return false
+	end
+	if is_not_equal(_math:cosh(2.8), 8.25272841686113) then
+		error("cosh is incorrect")
+		return false
+	end
+	if is_not_equal(_math:exp(1.6), 4.95303242439511) then
+		error("exp is incorrect")
+		return false
+	end
+	if _math:floor(1.2) ~= 1 then
+		error("floor is incorrect")
+		return false
+	end
+	if is_not_equal(_math:remainder(2.8, 2.5), 0.3) then
+		error("remainder is incorrect")
+		return false
+	end
+	if is_not_equal(_math:log(0.1758, 1), -1.73840829373106) then
+		error("log is incorrect")
+		return false
+	end
+	if is_not_equal(_math:log10(0.1758, 1), -0.75498112926225) then
+		error("log10 is incorrect")
+		return false
+	end
+	if _math:max_float(2.8, 3.0) ~= 3 then
+		error("max_float is incorrect")
+		return false
+	end
+	if is_not_equal(_math:min_float(1.6, 1.2), 1.20000004768372) then
+		error("min_float is incorrect")
+		return false
+	end
+	if is_not_equal(_math:pow(2.5, 3.4), 22.54218602980021) then
+		error("pow is incorrect")
+		return false
+	end
+	if _math:round(2.8) ~= 3 then
+		error("round is incorrect")
+		return false
+	end
+	if is_not_equal(_math:round_with_mode(0.1758, 2), 0.18) then
+		error("round_with_mode is incorrect")
+		return false
+	end
+	if is_not_equal(_math:sin(0.500000), 0.4794255386042) then
+		error("sin is incorrect")
+		return false
+	end
+	if is_not_equal(_math:sinh(0.500000), 0.52109530549375) then
+		error("sinh is incorrect")
+		return false
+	end
+	if is_not_equal(_math:sqrt(0.1758), 0.41928510586473) then
+		error("sqrt is incorrect")
+		return false
+	end
+	if is_not_equal(_math:tan(0.1758), 0.17763374304578) then
+		error("tan is incorrect")
+		return false
+	end
+	if is_not_equal(_math:tanh(0.1758), 0.1740110418049) then
+		error("tanh is incorrect")
+		return false
+	end
+	return true
+end
+
 execute("test_global", test_global)
 execute("test_zlib", test_zlib)
 execute("test_bcrypt", test_bcrypt)
 execute("test_image", test_image)
+execute("test_math", test_math)
 
 return rv
