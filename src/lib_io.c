@@ -32,7 +32,9 @@
 #include <string.h>
 #include <limits.h>
 #include "lib_io.h"
-
+#ifdef SUSHI_SUPPORT_LINUX
+#include <sys/timerfd.h>
+#endif
 #ifdef SUSHI_SUPPORT_WIN32
 #include <windows.h>
 #include <direct.h>
@@ -512,6 +514,34 @@ static int write_to_stderr(lua_State* state)
 	return 1;
 }
 
+static int start_timer(lua_State* state)
+{
+	int osec = luaL_checknumber(state, 2);
+	if(osec < 0) {
+		osec = 0;
+	}
+	long nsec = luaL_checklong(state, 3);
+	if(nsec < 0) {
+		nsec = 0;
+	}
+#ifdef SUSHI_SUPPORT_LINUX
+	struct itimerspec new_value;
+	new_value.it_value.tv_sec = osec;
+	new_value.it_value.tv_nsec = nsec;
+	new_value.it_interval.tv_sec = osec;
+	new_value.it_interval.tv_nsec = nsec;
+	int tfd = timerfd_create(CLOCK_REALTIME, 0);
+	if(timerfd_settime(tfd, TFD_TIMER_ABSTIME, &new_value, NULL) == -1) {
+		lua_pushnumber(state, -1);
+		return 1;
+	}
+	lua_pushnumber(state, tfd);
+#else
+	lua_pushnumber(state, -1);
+#endif
+	return 1;
+}
+
 static const luaL_Reg funcs[] = {
 	{ "get_file_info", get_file_info },
 	{ "set_file_mode", set_file_mode },
@@ -537,6 +567,7 @@ static const luaL_Reg funcs[] = {
 	{ "set_current_directory", set_current_directory },
 	{ "write_to_stdout", write_to_stdout },
 	{ "write_to_stderr", write_to_stderr },
+	{ "start_timer", start_timer },
 	{ NULL, NULL }
 };
 
