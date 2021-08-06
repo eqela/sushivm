@@ -42,7 +42,7 @@ ifeq ($(VERSION),)
 	VERSION=`date '+%Y%m%d'`
 endif
 OBJS=main.o \
-	shebang.o \
+	argutil.o \
 	apps.o \
 	sushi.o \
 	install_application.o \

@@ -117,7 +117,7 @@ static int count_words(char* str)
 	return v;
 }
 
-int shebang_process(const char* fileName, int argc, const char** argv, int argcReserved, int* nArgc, char*** nArgv)
+int argutil_shebang_process(const char* fileName, int argc, const char** argv, int argcReserved, int* nArgc, char*** nArgv)
 {
 	if(fileName == NULL) {
 		return 0;
@@ -155,7 +155,36 @@ int shebang_process(const char* fileName, int argc, const char** argv, int argcR
 	return nc;
 }
 
-char** shebang_argv_free(char** argv)
+int argutil_process_cmdline(const char* cmd, int* nArgc, char*** nArgv)
+{
+	if(cmd == NULL) {
+		return 0;
+	}
+	char* op = strdup(cmd);
+	char* p = op;
+	int words = count_words(p);
+	int nc = words;
+	char** nv = (char**)malloc(sizeof(char*) * (nc + 1));
+	int n = 0;
+	while(1) {
+		char* word = next_word(&p);
+		if(word == NULL) {
+			break;
+		}
+		nv[n++] = strdup(word);
+	}
+	nv[n++] = NULL;
+	if(nArgc) {
+		*nArgc = nc;
+	}
+	if(nArgv) {
+		*nArgv = nv;
+	}
+	free(op);
+	return nc;
+}
+
+char** argutil_argv_free(char** argv)
 {
 	if(argv != NULL) {
 		int n = 0;

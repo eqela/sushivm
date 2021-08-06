@@ -22,10 +22,11 @@
  * SOFTWARE.
  */
 
-#ifndef SHEBANG_H
-#define SHEBANG_H
+#ifndef ARGUTIL_H
+#define ARGUTIL_H
 
-int shebang_process(const char* fileName, int argc, const char** argv, int argcReserved, int* nArgc, char*** nArgv);
-char** shebang_argv_free(char** argv);
+int argutil_shebang_process(const char* fileName, int argc, const char** argv, int argcReserved, int* nArgc, char*** nArgv);
+int argutil_process_cmdline(const char* cmd, int* nArgc, char*** nArgv);
+char** argutil_argv_free(char** argv);
 
 #endif
