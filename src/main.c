@@ -36,7 +36,7 @@
 #include <signal.h>
 #endif
 #include <limits.h>
-#include "shebang.h"
+#include "argutil.h"
 #include "apps.h"
 
 static int is_offline = 0;
@@ -241,9 +241,9 @@ static int sushi_main_file(const char* fileName, int processArgc, const char** p
 		else {
 			int nc;
 			char** nv;
-			if(shebang_process(fileName, processArgc, processArgv, processArgcReserved, &nc, &nv) > 0) {
+			if(argutil_shebang_process(fileName, processArgc, processArgv, processArgcReserved, &nc, &nv) > 0) {
 				int v = sushi_main_app(nv[0], nc, (const char**)nv, 1);
-				shebang_argv_free(nv);
+				argutil_argv_free(nv);
 				return v;
 			}
 			code = sushi_code_read_from_file(fileName);
@@ -286,7 +286,7 @@ static const char* _get_environment_variable(const char* name)
 
 static void initialize_configuration()
 {
-	char* homeDirectory = NULL;
+	const char* homeDirectory = NULL;
 #ifdef SUSHI_SUPPORT_WIN32
 	PWSTR profile;
 	char hdbuffer[32768];
@@ -516,6 +516,16 @@ int main(int c, const char** v)
 		}
 		sushi_error("Unsupported parameter: `%s'", v[n]);
 		return -1;
+	}
+	const char* appcmd = _get_environment_variable("SUSHI_APP_CMD");
+	if(appcmd && *appcmd) {
+		int nc;
+		char** nv;
+		if(argutil_process_cmdline(appcmd, &nc, &nv) > 0) {
+			int v = sushi_main_app(nv[0], nc, (const char**)nv, 1);
+			argutil_argv_free(nv);
+			return v;
+		}
 	}
 	show_usage(v[0]);
 	return 0;

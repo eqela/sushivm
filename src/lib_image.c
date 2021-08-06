@@ -97,7 +97,7 @@ static int encode_png_data(lua_State* state)
 	IMAGE_DATA_HOLDER pdh;
 	pdh.buffer = NULL;
 	pdh.size = 0;
-	png_set_write_fn(png_ptr, &pdh, encode_png_data_to_memory, flush_png);
+	png_set_write_fn(png_ptr, &pdh, (png_rw_ptr)encode_png_data_to_memory, flush_png);
 	png_write_info(png_ptr, info_ptr);
 	png_write_image(png_ptr, row_pointers);
 	png_write_end(png_ptr, info_ptr);
