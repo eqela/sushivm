@@ -604,12 +604,15 @@ static int create_string_for_float(lua_State* state)
 	return 1;
 }
 
-static int create_string_for_double(lua_State* state)
+static int create_string_for_double_with_decimals(lua_State* state)
 {
 	double cc = luaL_checknumber(state, 2);
+	int dc = luaL_checknumber(state, 3);
+	char c = '0' + dc;
+	char f[6] = {'%', '.', c, 'f', '\0'};
 	char v[512];
 	memset(v, 0, 512);
-	snprintf(v, 511, "%.7f", cc);
+	snprintf(v, 511, f, cc);
 	int p = strlen(v) - 1;
 	while(p >= 0 && v[p] == '0') {
 		if(p > 0 && v[p-1] == '.') {
@@ -1017,7 +1020,7 @@ static const luaL_Reg funcs[] = {
 	{ "create_hex_string_for_integer", create_hex_string_for_integer },
 	{ "create_decimal_string_for_integer", create_decimal_string_for_integer },
 	{ "create_string_for_float", create_string_for_float },
-	{ "create_string_for_double", create_string_for_double },
+	{ "create_string_for_double_with_decimals", create_string_for_double_with_decimals },
 	{ "get_byte_from_string", get_byte_from_string },
 	{ "string_starts_with", string_starts_with },
 	{ "compare_string_ignore_case", compare_string_ignore_case },
