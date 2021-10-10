@@ -608,8 +608,8 @@ static int create_string_for_double_with_decimals(lua_State* state)
 {
 	double cc = luaL_checknumber(state, 2);
 	int dc = luaL_checknumber(state, 3);
-	char c = '0' + dc;
-	char f[6] = {'%', '.', c, 'f', '\0'};
+	char f[6];
+	sprintf(f, "%s%d%s", "%.", dc, "f");
 	char v[512];
 	memset(v, 0, 512);
 	snprintf(v, 511, f, cc);
