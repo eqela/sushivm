@@ -58,6 +58,183 @@ int remove_io_listener(lua_State* state);
 int execute_io_manager(lua_State* state);
 int close_io_manager(lua_State* state);
 
+static int create_udp_socket(lua_State* state)
+{
+	int fd = socket(AF_INET, SOCK_DGRAM, 0);
+	lua_pushnumber(state, fd);
+	return 1;
+}
+
+static int send_udp_data(lua_State* state)
+{
+	lua_remove(state, 1);
+	int fd = luaL_checknumber(state, 1);
+	if(fd < 0) {
+		lua_pushnumber(state, -1);
+		return 1;
+	}
+	void* ptr = luaL_checkudata(state, 2, "_sushi_buffer");
+	if(ptr == NULL) {
+		lua_pushnumber(state, -1);
+		return 1;
+	}
+	long size = luaL_checknumber(state, 3);
+	if(size < 0) {
+		memcpy(&size, ptr, sizeof(long));
+	}
+	if(size == 0) {
+		lua_pushnumber(state, 0);
+		return 1;
+	}
+	const char* address = lua_tostring(state, 4);
+	if(address == NULL) {
+		lua_pushnumber(state, -1);
+		return 1;
+	}
+	int port = luaL_checknumber(state, 5);
+	if(port < 1) {
+		lua_pushnumber(state, -1);
+		return 1;
+	}
+	int broadcastFlag = luaL_checknumber(state, 6);
+	if(broadcastFlag != 0 && broadcastFlag != 1) {
+		broadcastFlag = 0;
+	}
+	struct sockaddr_in server_addr;
+	memset(&server_addr, 0, sizeof(struct sockaddr_in));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_addr.s_addr = inet_addr(address);
+	server_addr.sin_port = htons(port);
+	if(broadcastFlag == 1) {
+		setsockopt(fd, SOL_SOCKET, SO_BROADCAST, (void*)&broadcastFlag, sizeof(int));
+	}
+	int r = sendto(fd, ptr + sizeof(long), size, 0, (struct sockaddr*)(&server_addr), sizeof(struct sockaddr_in));
+	if(broadcastFlag == 1) {
+		broadcastFlag = 0;
+		setsockopt(fd, SOL_SOCKET, SO_BROADCAST, (void*)&broadcastFlag, sizeof(int));
+	}
+	if(r == 0) {
+		r = -1;
+	}
+	lua_pushnumber(state, r);
+	return 1;
+}
+
+static int read_udp_data(lua_State* state)
+{
+	lua_remove(state, 1);
+	int fd = luaL_checknumber(state, 1);
+	if(fd < 0) {
+		lua_pushnumber(state, -1);
+		return 1;
+	}
+	void* ptr = luaL_checkudata(state, 2, "_sushi_buffer");
+	if(ptr == NULL) {
+		lua_pushnumber(state, -1);
+		return 1;
+	}
+	long bsz;
+	memcpy(&bsz, ptr, sizeof(long));
+	int size = luaL_checknumber(state, 3);
+	if(size < 0 || size > bsz) {
+		size = bsz;
+	}
+	if(size == 0) {
+		lua_pushnumber(state, 0);
+		return 1;
+	}
+	int timeout = luaL_checknumber(state, 4);
+	if(timeout > 0) {
+#if defined(SUSHI_SUPPORT_WIN32)
+		DWORD toval = timeout / 1000;
+		setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&toval, sizeof(DWORD));
+#else
+		struct timeval tv;
+		tv.tv_sec = timeout / 1000000;
+		tv.tv_usec = timeout % 1000000;
+		setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(struct timeval));
+#endif
+	}
+	struct sockaddr_in peeraddr;
+	memset(&peeraddr, 0, sizeof(struct sockaddr_in));
+	socklen_t s = sizeof(struct sockaddr_in);
+	int r = recvfrom(fd, ptr+sizeof(long), size, 0, (struct sockaddr*)&peeraddr, &s);
+	if(timeout > 0) {
+		setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, NULL, 0);
+	}
+	if(r > 0) {
+		; // all good
+	}
+	else if(r == 0) {
+		r = -1;
+	}
+	else {
+		if(errno == EAGAIN || errno == EWOULDBLOCK) {
+			r = 0;
+		}
+	}
+	lua_pushnumber(state, r);
+	if(r > 0) {
+		lua_pushstring(state, inet_ntoa(peeraddr.sin_addr));
+		lua_pushnumber(state, ntohs(peeraddr.sin_port));
+		return 3;
+	}
+	return 1;
+}
+
+static int bind_udp_port(lua_State* state)
+{
+	lua_remove(state, 1);
+	int fd = luaL_checknumber(state, 1);
+	if(fd < 0) {
+		lua_pushnumber(state, 1);
+		return 1;
+	}
+	int port = luaL_checknumber(state, 2);
+	if(port < 1) {
+		lua_pushnumber(state, 1);
+		return 1;
+	}
+	struct sockaddr_in server_addr;
+	memset(&server_addr, 0, sizeof(struct sockaddr_in));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	server_addr.sin_port = htons(port);
+	if(bind(fd, (struct sockaddr*)(&server_addr), sizeof(struct sockaddr_in)) != 0) {
+		lua_pushnumber(state, 1);
+		return 1;
+	}
+	lua_pushnumber(state, 0);
+	return 1;
+}
+
+static int get_udp_socket_local_address(lua_State* state)
+{
+	lua_remove(state, 1);
+	int fd = luaL_checknumber(state, 1);
+	if(fd < 0) {
+		return 0;
+	}
+	socklen_t s = (socklen_t)sizeof(struct sockaddr_in);
+	struct sockaddr_in addr;
+	int r = getsockname(fd, (struct sockaddr*)(&addr), &s);
+	if(r < 0) {
+		return 0;
+	}
+	lua_pushstring(state, inet_ntoa(addr.sin_addr));
+	lua_pushnumber(state, ntohs(addr.sin_port));
+	return 2;
+}
+
+static int close_udp_socket(lua_State* state)
+{
+	int fd = luaL_checknumber(state, 2);
+	if(fd >= 0) {
+		close(fd);
+	}
+	return 0;
+}
+
 static int create_tcp_socket(lua_State* state)
 {
 	int fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -338,6 +515,12 @@ static const luaL_Reg funcs[] = {
 	{ "write_to_tcp_socket", write_to_tcp_socket },
 	{ "accept_tcp_socket", accept_tcp_socket },
 	{ "close_tcp_socket", close_tcp_socket },
+	{ "create_udp_socket", create_udp_socket },
+	{ "send_udp_data", send_udp_data },
+	{ "read_udp_data", read_udp_data },
+	{ "bind_udp_port", bind_udp_port },
+	{ "get_udp_socket_local_address", get_udp_socket_local_address },
+	{ "close_udp_socket", close_udp_socket },
 	{ NULL, NULL }
 };
 
