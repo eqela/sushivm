@@ -200,10 +200,45 @@ function test_math()
 	return true
 end
 
+function test_udp_socket()
+	local fd = _net:create_udp_socket()
+	if fd < 0 then
+		error("Failed to create UDP socket")
+		return false
+	end
+	local data = _util:convert_string_to_buffer("test")
+	if _net:send_udp_data(fd, data, -1, "127.0.0.1", 1234, 0) < 1 then
+		error("Failed to send UDP data")
+		return false
+	end
+	local host, port = _net:get_udp_socket_local_address(fd)
+	info("UDP socket host: " .. host)
+	info("UDP socket port: " .. port)
+	local fd2 = _net:create_udp_socket()
+	if _net:send_udp_data(fd2, data, -1, "127.0.0.1", port, 0) < 4 then
+		error("Failed to send UDP data (2)")
+		return false
+	end
+	local host2, port2 = _net:get_udp_socket_local_address(fd2)
+	info("UDP socket2 host: " .. host2)
+	info("UDP socket2 port: " .. port2)
+	local data2 = _util:allocate_buffer(32)
+	local r, peerhost, peerport = _net:read_udp_data(fd, data2, -1, 0)
+	if r ~= 4 then
+		error("Failed to receive UDP data")
+		return false
+	end
+	info("UDP tests successful")
+	_net:close_udp_socket(fd)
+	_net:close_udp_socket(fd2)
+	return true
+end
+
 execute("test_global", test_global)
 execute("test_zlib", test_zlib)
 execute("test_bcrypt", test_bcrypt)
 execute("test_image", test_image)
 execute("test_math", test_math)
+execute("test_udp_socket", test_udp_socket)
 
 return rv
